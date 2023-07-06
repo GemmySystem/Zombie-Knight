@@ -1,0 +1,19 @@
+= Zombie Knight
+
+An arcade-style game demo made in Ren'Py using Creator Defined Displayables. 
+
+
+== Credits
+
+* Zombie Sprites - link:https://www.gameart2d.com/the-zombies-free-sprites.html[Game Art 2D]
+* Knight Sprites - link:https://www.gameart2d.com/the-knight-free-sprites.html[Game Art 2D]
+* Background - link:https://www.gameart2d.com/free-graveyard-platformer-tileset.html[Game Art 2D]
+* Tile Set - link:https://www.gameart2d.com/free-graveyard-platformer-tileset.html[Game Art 2D]
+* Ruby Sprite - https://opengameart.org/content/item-ruby-banana-star[mieki256 on OpenGameArt.org]
+* Portal Sprites - https://elthen.itch.io/2d-pixel-art-portal-sprites[Elthen on Itch.io]
+* Slash Effect - https://opengameart.org/content/slash-effect[MetaShinryu on OpenGameArt.org]
+* Pixel Font - https://www.fontspace.com/pixel-intv-font-f22187[Pixel Sagas on FontSpace.com]
+* Poultrygeist Font - https://www.fontspace.com/poultrygeist-font-f443[Apostrophic Lab on FontSpace.com]
+* Background Music - https://opengameart.org/content/5-chiptunes-action[SubspaceAudio on OpenGameArt.org]
+* Additional SFX - https://www.leshylabs.com/apps/sfMaker/[Leshy SFMaker]
+
