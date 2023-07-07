@@ -30,16 +30,39 @@
 
 
     class ZKSprite():
+        """
+        The base class for all sprites and tiles for Zombie Knight.
+
+        Provides rendering and collision detection methods.
+        """
+
         def __init__(self, width, height, x, y):
             self.width = width
             self.height = height
             self.position = Vector(x, y)
 
         def render(self, render, st, at):
+            """
+            Renders the sprite's image on the given displayable using Ren'Py's render methods.
+
+            Arguments:
+            render (renpy.Render): Ren'Py render object onto which this sprite will be rendered.
+            st (float): Shown timebase in seconds.
+            at (float): Animation timebase in seconds.
+            """
             r = renpy.render(self.image, self.width, self.height, st, at)
             render.blit(r, (int(self.position.x), int(self.position.y)))
         
+        def update(self):
+            pass
+
         def is_colliding(self, other):
+            """
+            Tests whether this sprite is colliding with another.
+
+            Arguments:
+            other (ZKSprite): Other sprite to test for collision with.
+            """
             return (
                 self.position.x <= other.position.x + other.width and
                 self.position.x + self.width >= other.position.x and
@@ -49,121 +72,178 @@
 
 
     class Tile(ZKSprite):
-        def __init__(self, x, y, image_int, main_group, sub_group=""):
+        """
+        A static, collidable ZKSprite.
+        """
+        def __init__(self, x, y, image_int, main_tile_group, sub_tile_group=[]):
+            """
+            Arguments:
+            x (int): X-axis coordinate of the top-left of this tile.
+            y (int): Y-axis coordinate of the top-left of this tile.
+            image_int (int): An integer that defines the sprite used by this tile, e.g. 1: dirt and 2-5: platforms.
+            main_tile_group (list): List of all the Tiles to be rendered.
+            sub_tile_group (list): List of all the Tiles of this subtype, e.g. Platforms.
+            """
             ZKSprite.__init__(self, 30, 30, x, y)
 
-            # Load in the correct image and append it to the correct sub_group
+            # Load in the correct image and append it to the correct sub_tile_group
             # Dirt tiles
             if image_int == 1:
                 self.image = Image("images/tiles/Tile (1).png")
             # Platform tiles
             elif image_int == 2:
                 self.image = Image("images/tiles/Tile (2).png")
-                sub_group.append(self)
+                sub_tile_group.append(self)
             elif image_int == 3:
                 self.image = Image("images/tiles/Tile (3).png")
-                sub_group.append(self)
+                sub_tile_group.append(self)
             elif image_int == 4:
                 self.image = Image("images/tiles/Tile (4).png")
-                sub_group.append(self)
+                sub_tile_group.append(self)
             elif image_int == 5:
                 self.image = Image("images/tiles/Tile (5).png")
-                sub_group.append(self)
+                sub_tile_group.append(self)
 
             # Add every tile to the main group
-            main_group.append(self)
+            main_tile_group.append(self)
 
-        def update(self):
+    class ZKAnimated(ZKSprite):
+        """
+        An animated ZKSprite.
+        """
+        def __init__(self, width, height, x, y):
+            ZKSprite.__init__(self, width, height, x, y)
+    
+        def generate_mirrored_animation(self, fname_pattern, start, end, step = 1):
+            """
+            Generates two mirrored lists of sprites based on files matching the
+            given `fname_pattern` interpolated with numbers from `start` to
+            `end` (inclusive) stepping by `step` at a time.
 
-            pass
+            For example, given the inputs `("hello_{}.png", 1, 5, 1)`, this
+            method would attempt to load sprites for the following source image
+            files:
+            ```
+            hello_1.png
+            hello_2.png
+            hello_3.png
+            hello_4.png
+            hello_5.png
+            ```
 
-    class ZKPlayer(ZKSprite):
-        def __init__(self, x, y, platform_group, portal_group, beam_group):
-            # Set constant variables
-            self.HORIZONTAL_ACCELERATION = 2
-            self.HORIZONTAL_FRICTION = 0.15
-            self.VERTICAL_ACCELERATION = 0.8  # Gravity
-            self.VERTICAL_JUMP_SPEED = 23  # Determines how high the player can jump
-            self.STARTING_HEALTH = 100
+            This function returns two lists, a righthand side and a lefthand
+            side.  The righthand list is the sprites loaded as-is, where the
+            lefthand side is the x-axis inversion of the loaded sprites.
 
-            ZKSprite.__init__(self, 80, 118, x, y)
+            Arguments:
+
+            fname_pattern (str): Filename string pattern to be used with
+            Python's string `format` function.  This will be given a single int
+            value from the range of numbers defined by `start`, `end`, and
+            `step`.
+
+            start (int): Starting index for the number series that will be
+            generated from this value to `end`.
+
+            end (int): Ending index for the number series that will be generated
+            from `start` to this value.
+
+            step (int): Step by which the number series from `start` to `end`
+            will be generated.
+
+            Returns:
+
+            right_sprites (Displayable[]): Righthand side sprite list.
+
+            left_sprites (Displayable[]): Lefthand side sprite list.
+            """
+            right_sprites = []
+            left_sprites = []
+            for i in range(start, end + 1 if step > 0 else end - 1, step):
+                img = Image(fname_pattern.format(i))
+                right_sprites.append(img)
+                left_sprites.append(Transform(img, xzoom=-1.0))
+            
+            return (right_sprites, left_sprites)
+
+        def generate_animation(self, fname_pattern, start, end, step = 1):
+            sprites = []
+            for i in range(start, end + 1 if step > 0 else end - 1, step):
+                sprites.append(Image(fname_pattern.format(i)))
+            return sprites
+                
+
+    class ZKPlayer(ZKAnimated):
+        """
+        It's the player!
+
+        ...
+
+        Attributes:
+        -----------
+        move_right_sprites : list
+            List of sprites for the ZKPlayer's right movement animation.
+        move_left_sprites : list
+            List of sprites for the ZKPlayer's left movement animation.
+        idle_right_sprites : list
+            List of sprites for the ZKPlayer's idle animation while facing right.
+        idle_left_sprites : list
+            List of sprites for the ZKPlayer's idle animation while facing left.
+        jump_right_sprites : list
+            List of sprites for the ZKPlayer's animation while jumping right.
+        jump_left_sprites : list
+            List of sprites for the ZKPlayer's animation while jumping left.
+        attack_right_sprites : list
+            List of sprites for the ZKPlayer's animation while attacking right.
+        attack_left_sprites : list
+            List of sprites for the ZKPlayer's animation while attacking left.
+        
+        current_sprite : float
+            Current frame index represented as a float, which is floored to get the frame to be rendered.
+        image : Image
+            Current frame to be rendered.
+        
+        platform_tiles : Tile[]
+            List of platform Tiles used for collision detection.
+        portal_group : Portal[]
+            List of Portals used for collision detection.
+        beam_group : Beam[]
+            List of Beams into which "slash" sprites will be inserted.
+
+        animate_jump : bool
+            Whether jumping is being animated.
+        animate_fire : bool
+            Whether slashing is being animated.
+
+        velocity : Vector
+            Current character velocity.
+        acceleration : Vector
+            Current character acceleration.
+            
+        """
+
+        # Constant variables
+        HORIZONTAL_ACCELERATION = 2
+        HORIZONTAL_FRICTION = 0.15
+        VERTICAL_ACCELERATION = 0.8  # Gravity
+        VERTICAL_JUMP_SPEED = 23  # Determines how high the player can jump
+        STARTING_HEALTH = 100
+
+        def __init__(self, x, y, platform_tiles, portal_group, beam_group):
+            ZKAnimated.__init__(self, 80, 118, x, y)
 
             # Animation frames
-            self.move_right_sprites = []
-            self.move_left_sprites = []
-            self.idle_right_sprites = []
-            self.idle_left_sprites = []
-            self.jump_right_sprites = []
-            self.jump_left_sprites = []
-            self.attack_right_sprites = []
-            self.attack_left_sprites = []
-
-            # Moving
-            self.move_right_sprites.append(Image("images/player/run/Run (1).png"))
-            self.move_right_sprites.append(Image("images/player/run/Run (2).png"))
-            self.move_right_sprites.append(Image("images/player/run/Run (3).png"))
-            self.move_right_sprites.append(Image("images/player/run/Run (4).png"))
-            self.move_right_sprites.append(Image("images/player/run/Run (5).png"))
-            self.move_right_sprites.append(Image("images/player/run/Run (6).png"))
-            self.move_right_sprites.append(Image("images/player/run/Run (7).png"))
-            self.move_right_sprites.append(Image("images/player/run/Run (8).png"))
-            self.move_right_sprites.append(Image("images/player/run/Run (9).png"))
-            self.move_right_sprites.append(Image("images/player/run/Run (10).png"))
-
-            for sprite in self.move_right_sprites:
-                self.move_left_sprites.append(Transform(sprite, xzoom=-1.0))
-
-            # Idling
-            self.idle_right_sprites.append(Image("images/player/idle/Idle (1).png"))
-            self.idle_right_sprites.append(Image("images/player/idle/Idle (2).png"))
-            self.idle_right_sprites.append(Image("images/player/idle/Idle (3).png"))
-            self.idle_right_sprites.append(Image("images/player/idle/Idle (4).png"))
-            self.idle_right_sprites.append(Image("images/player/idle/Idle (5).png"))
-            self.idle_right_sprites.append(Image("images/player/idle/Idle (6).png"))
-            self.idle_right_sprites.append(Image("images/player/idle/Idle (7).png"))
-            self.idle_right_sprites.append(Image("images/player/idle/Idle (8).png"))
-            self.idle_right_sprites.append(Image("images/player/idle/Idle (9).png"))
-            self.idle_right_sprites.append(Image("images/player/idle/Idle (10).png"))
-
-            for sprite in self.idle_right_sprites:
-                self.idle_left_sprites.append(Transform(sprite, xzoom=-1.0))
-
-            # Jumping
-            self.jump_right_sprites.append(Image("images/player/jump/Jump (1).png"))
-            self.jump_right_sprites.append(Image("images/player/jump/Jump (2).png"))
-            self.jump_right_sprites.append(Image("images/player/jump/Jump (3).png"))
-            self.jump_right_sprites.append(Image("images/player/jump/Jump (4).png"))
-            self.jump_right_sprites.append(Image("images/player/jump/Jump (5).png"))
-            self.jump_right_sprites.append(Image("images/player/jump/Jump (6).png"))
-            self.jump_right_sprites.append(Image("images/player/jump/Jump (7).png"))
-            self.jump_right_sprites.append(Image("images/player/jump/Jump (8).png"))
-            self.jump_right_sprites.append(Image("images/player/jump/Jump (9).png"))
-            self.jump_right_sprites.append(Image("images/player/jump/Jump (10).png"))
-
-            for sprite in self.jump_right_sprites:
-                self.jump_left_sprites.append(Transform(sprite, xzoom=-1.0))
-
-            # Attacking
-            self.attack_right_sprites.append(Image("images/player/attack/Attack (1).png"))
-            self.attack_right_sprites.append(Image("images/player/attack/Attack (2).png"))
-            self.attack_right_sprites.append(Image("images/player/attack/Attack (3).png"))
-            self.attack_right_sprites.append(Image("images/player/attack/Attack (4).png"))
-            self.attack_right_sprites.append(Image("images/player/attack/Attack (5).png"))
-            self.attack_right_sprites.append(Image("images/player/attack/Attack (6).png"))
-            self.attack_right_sprites.append(Image("images/player/attack/Attack (7).png"))
-            self.attack_right_sprites.append(Image("images/player/attack/Attack (8).png"))
-            self.attack_right_sprites.append(Image("images/player/attack/Attack (9).png"))
-            self.attack_right_sprites.append(Image("images/player/attack/Attack (10).png"))
-
-            for sprite in self.attack_right_sprites:
-                self.attack_left_sprites.append(Transform(sprite, xzoom=-1.0))
+            self.move_right_sprites, self.move_left_sprites = self.generate_mirrored_animation("images/player/run/Run ({}).png", 1, 10)
+            self.idle_right_sprites, self.idle_left_sprites = self.generate_mirrored_animation("images/player/idle/Idle ({}).png", 1, 10)
+            self.jump_right_sprites, self.jump_left_sprites = self.generate_mirrored_animation("images/player/jump/Jump ({}).png", 1, 10)
+            self.attack_right_sprites, self.attack_left_sprites = self.generate_mirrored_animation("images/player/attack/Attack ({}).png", 1, 10)
 
             # Load image
             self.current_sprite = 0
             self.image = self.idle_right_sprites[self.current_sprite]
 
             # Attach sprite groups
-            self.platform_group = platform_group
+            self.platform_tiles = platform_tiles
             self.portal_group = portal_group
             self.beam_group = beam_group
 
@@ -228,14 +308,14 @@
 
             # Collision check between player and platforms when falling
             if self.velocity.y > 0:
-                for platform in self.platform_group:
+                for platform in self.platform_tiles:
                     if platform.is_colliding(self):
                         self.position.y = platform.position.y - self.height + 5
                         self.velocity.y = 0
 
             # Collision check between player and platform if jumping up
             if self.velocity.y < 0:
-                for platform in self.platform_group:
+                for platform in self.platform_tiles:
                     if platform.is_colliding(self):
                         self.velocity.y = 0
                         while platform.is_colliding(self):
@@ -277,7 +357,7 @@
             # Jump upwards if on a platform
 
             # Only jump if on a platform
-            for platform in self.platform_group:
+            for platform in self.platform_tiles:
                 if platform.is_colliding(self):
                     renpy.sound.play("audio/zk_jump_sound.wav")
                     self.velocity.y = -1 * self.VERTICAL_JUMP_SPEED
@@ -343,114 +423,25 @@
                 self.beam_group.remove(self)
 
 
-    class Zombie(ZKSprite):
-        def __init__(self, x, y, platform_group, portal_group, min_speed, max_speed):
-            ZKSprite.__init__(self, 120, 120, x, y)
+    class Zombie(ZKAnimated):
+        def __init__(self, x, y, platform_tiles, portal_group, min_speed, max_speed):
+            ZKAnimated.__init__(self, 120, 120, x, y)
 
             # Set constant variables
             self.VERTICAL_ACCELERATION = 3  # Gravity
             self.RISE_TIME = 2
 
-            # Animation frames
-            self.walk_right_sprites = []
-            self.walk_left_sprites = []
-            self.die_right_sprites = []
-            self.die_left_sprites = []
-            self.rise_right_sprites = []
-            self.rise_left_sprites = []
-
             gender = random.randint(0, 1)
             # Boy Zombie
             if gender == 0:
-                # Walking
-                self.walk_right_sprites.append(Image("images/zombie/boy/walk/Walk (1).png"))
-                self.walk_right_sprites.append(Image("images/zombie/boy/walk/Walk (2).png"))
-                self.walk_right_sprites.append(Image("images/zombie/boy/walk/Walk (3).png"))
-                self.walk_right_sprites.append(Image("images/zombie/boy/walk/Walk (4).png"))
-                self.walk_right_sprites.append(Image("images/zombie/boy/walk/Walk (5).png"))
-                self.walk_right_sprites.append(Image("images/zombie/boy/walk/Walk (6).png"))
-                self.walk_right_sprites.append(Image("images/zombie/boy/walk/Walk (7).png"))
-                self.walk_right_sprites.append(Image("images/zombie/boy/walk/Walk (8).png"))
-                self.walk_right_sprites.append(Image("images/zombie/boy/walk/Walk (9).png"))
-                self.walk_right_sprites.append(Image("images/zombie/boy/walk/Walk (10).png"))
+                self.walk_right_sprites, self.walk_left_sprites = self.generate_mirrored_animation("images/zombie/boy/walk/Walk ({}).png", 1, 10)
+                self.die_right_sprites, self.die_left_sprites = self.generate_mirrored_animation("images/zombie/boy/dead/Dead ({}).png", 1, 10)
+                self.rise_right_sprites, self.rise_left_sprites = self.generate_mirrored_animation("images/zombie/boy/dead/Dead ({}).png", 10, 1, -1)
 
-                for sprite in self.walk_right_sprites:
-                    self.walk_left_sprites.append(Transform(sprite, xzoom=-1.0))
-
-                # Dying
-                self.die_right_sprites.append(Image("images/zombie/boy/dead/Dead (1).png"))
-                self.die_right_sprites.append(Image("images/zombie/boy/dead/Dead (2).png"))
-                self.die_right_sprites.append(Image("images/zombie/boy/dead/Dead (3).png"))
-                self.die_right_sprites.append(Image("images/zombie/boy/dead/Dead (4).png"))
-                self.die_right_sprites.append(Image("images/zombie/boy/dead/Dead (5).png"))
-                self.die_right_sprites.append(Image("images/zombie/boy/dead/Dead (6).png"))
-                self.die_right_sprites.append(Image("images/zombie/boy/dead/Dead (7).png"))
-                self.die_right_sprites.append(Image("images/zombie/boy/dead/Dead (8).png"))
-                self.die_right_sprites.append(Image("images/zombie/boy/dead/Dead (9).png"))
-                self.die_right_sprites.append(Image("images/zombie/boy/dead/Dead (10).png"))
-
-                for sprite in self.die_right_sprites:
-                    self.die_left_sprites.append(Transform(sprite, xzoom=-1.0))
-                
-                # Rising
-                self.rise_right_sprites.append(Image("images/zombie/boy/dead/Dead (10).png"))
-                self.rise_right_sprites.append(Image("images/zombie/boy/dead/Dead (9).png"))
-                self.rise_right_sprites.append(Image("images/zombie/boy/dead/Dead (8).png"))
-                self.rise_right_sprites.append(Image("images/zombie/boy/dead/Dead (7).png"))
-                self.rise_right_sprites.append(Image("images/zombie/boy/dead/Dead (6).png"))
-                self.rise_right_sprites.append(Image("images/zombie/boy/dead/Dead (5).png"))
-                self.rise_right_sprites.append(Image("images/zombie/boy/dead/Dead (4).png"))
-                self.rise_right_sprites.append(Image("images/zombie/boy/dead/Dead (3).png"))
-                self.rise_right_sprites.append(Image("images/zombie/boy/dead/Dead (2).png"))
-                self.rise_right_sprites.append(Image("images/zombie/boy/dead/Dead (1).png"))
-
-                for sprite in self.rise_right_sprites:
-                    self.rise_left_sprites.append(Transform(sprite, xzoom=-1.0))
             else:
-                # Walking
-                self.walk_right_sprites.append(Image("images/zombie/girl/walk/Walk (1).png"))
-                self.walk_right_sprites.append(Image("images/zombie/girl/walk/Walk (2).png"))
-                self.walk_right_sprites.append(Image("images/zombie/girl/walk/Walk (3).png"))
-                self.walk_right_sprites.append(Image("images/zombie/girl/walk/Walk (4).png"))
-                self.walk_right_sprites.append(Image("images/zombie/girl/walk/Walk (5).png"))
-                self.walk_right_sprites.append(Image("images/zombie/girl/walk/Walk (6).png"))
-                self.walk_right_sprites.append(Image("images/zombie/girl/walk/Walk (7).png"))
-                self.walk_right_sprites.append(Image("images/zombie/girl/walk/Walk (8).png"))
-                self.walk_right_sprites.append(Image("images/zombie/girl/walk/Walk (9).png"))
-                self.walk_right_sprites.append(Image("images/zombie/girl/walk/Walk (10).png"))
-
-                for sprite in self.walk_right_sprites:
-                    self.walk_left_sprites.append(Transform(sprite, xzoom=-1.0))
-
-                # Dying
-                self.die_right_sprites.append(Image("images/zombie/girl/dead/Dead (1).png"))
-                self.die_right_sprites.append(Image("images/zombie/girl/dead/Dead (2).png"))
-                self.die_right_sprites.append(Image("images/zombie/girl/dead/Dead (3).png"))
-                self.die_right_sprites.append(Image("images/zombie/girl/dead/Dead (4).png"))
-                self.die_right_sprites.append(Image("images/zombie/girl/dead/Dead (5).png"))
-                self.die_right_sprites.append(Image("images/zombie/girl/dead/Dead (6).png"))
-                self.die_right_sprites.append(Image("images/zombie/girl/dead/Dead (7).png"))
-                self.die_right_sprites.append(Image("images/zombie/girl/dead/Dead (8).png"))
-                self.die_right_sprites.append(Image("images/zombie/girl/dead/Dead (9).png"))
-                self.die_right_sprites.append(Image("images/zombie/girl/dead/Dead (10).png"))
-
-                for sprite in self.die_right_sprites:
-                    self.die_left_sprites.append(Transform(sprite, xzoom=-1.0))
-                
-                # Rising
-                self.rise_right_sprites.append(Image("images/zombie/girl/dead/Dead (10).png"))
-                self.rise_right_sprites.append(Image("images/zombie/girl/dead/Dead (9).png"))
-                self.rise_right_sprites.append(Image("images/zombie/girl/dead/Dead (8).png"))
-                self.rise_right_sprites.append(Image("images/zombie/girl/dead/Dead (7).png"))
-                self.rise_right_sprites.append(Image("images/zombie/girl/dead/Dead (6).png"))
-                self.rise_right_sprites.append(Image("images/zombie/girl/dead/Dead (5).png"))
-                self.rise_right_sprites.append(Image("images/zombie/girl/dead/Dead (4).png"))
-                self.rise_right_sprites.append(Image("images/zombie/girl/dead/Dead (3).png"))
-                self.rise_right_sprites.append(Image("images/zombie/girl/dead/Dead (2).png"))
-                self.rise_right_sprites.append(Image("images/zombie/girl/dead/Dead (1).png"))
-
-                for sprite in self.rise_right_sprites:
-                    self.rise_left_sprites.append(Transform(sprite, xzoom=-1.0))
+                self.walk_right_sprites, self.walk_left_sprites = self.generate_mirrored_animation("images/zombie/girl/walk/Walk ({}).png", 1, 10)
+                self.die_right_sprites, self.die_left_sprites = self.generate_mirrored_animation("images/zombie/girl/dead/Dead ({}).png", 1, 10)
+                self.rise_right_sprites, self.rise_left_sprites = self.generate_mirrored_animation("images/zombie/girl/dead/Dead ({}).png", 10, 1, -1)
 
             # Load image
             self.direction = random.choice([-1, 1])
@@ -462,7 +453,7 @@
                 self.image = self.walk_right_sprites[self.current_sprite]
 
             # Attach sprite groups
-            self.platform_group = platform_group
+            self.platform_tiles = platform_tiles
             self.portal_group = portal_group
 
             # Animation booleans
@@ -521,7 +512,7 @@
             #Check for collisions with platforms and portals
 
             # Collision check between zombie and platforms when falling
-            for platform in self.platform_group:
+            for platform in self.platform_tiles:
                 if platform.is_colliding(self):
                     self.position.y = platform.position.y - self.height + 5
                     self.velocity.y = 0
@@ -580,21 +571,12 @@
             self.image = sprite_list[int(self.current_sprite)]
 
 
-    class RubyMaker(ZKSprite):
+    class RubyMaker(ZKAnimated):
         def __init__(self, x, y, main_group):
-            ZKSprite.__init__(self, 60, 60, x, y)
+            ZKAnimated.__init__(self, 60, 60, x, y)
 
             # Animation frames
-            self.ruby_sprites = []
-
-            # Rotating
-            self.ruby_sprites.append(Image("images/ruby_maker/tile000.png"))
-            self.ruby_sprites.append(Image("images/ruby_maker/tile001.png"))
-            self.ruby_sprites.append(Image("images/ruby_maker/tile002.png"))
-            self.ruby_sprites.append(Image("images/ruby_maker/tile003.png"))
-            self.ruby_sprites.append(Image("images/ruby_maker/tile004.png"))
-            self.ruby_sprites.append(Image("images/ruby_maker/tile005.png"))
-            self.ruby_sprites.append(Image("images/ruby_maker/tile006.png"))
+            self.ruby_sprites = self.generate_animation("images/ruby_maker/tile00{}.png", 0, 6)
 
             # Load image
             self.current_sprite = 0
@@ -619,32 +601,23 @@
             self.image = sprite_list[int(self.current_sprite)]
 
 
-    class Ruby(ZKSprite):
-        def __init__(self, max_width, platform_group, portal_group):
-            ZKSprite.__init__(self, 60, 60, max_width // 2, 100)
+    class Ruby(ZKAnimated):
+        def __init__(self, max_width, platform_tiles, portal_group):
+            ZKAnimated.__init__(self, 60, 60, max_width // 2, 100)
 
             # Set constant variables
             self.VERTICAL_ACCELERATION = 3  # Gravity
             self.HORIZONTAL_VELOCITY = 5
 
             # Animation frames
-            self.ruby_sprites = []
-
-            # Rotating
-            self.ruby_sprites.append(Image("images/ruby/tile000.png"))
-            self.ruby_sprites.append(Image("images/ruby/tile001.png"))
-            self.ruby_sprites.append(Image("images/ruby/tile002.png"))
-            self.ruby_sprites.append(Image("images/ruby/tile003.png"))
-            self.ruby_sprites.append(Image("images/ruby/tile004.png"))
-            self.ruby_sprites.append(Image("images/ruby/tile005.png"))
-            self.ruby_sprites.append(Image("images/ruby/tile006.png"))
+            self.ruby_sprites = self.generate_animation("images/ruby/tile00{}.png", 0, 6)
 
             # Load image
             self.current_sprite = 0
             self.image = self.ruby_sprites[self.current_sprite]
 
             # Attach sprite groups
-            self.platform_group = platform_group
+            self.platform_tiles = platform_tiles
             self.portal_group = portal_group
 
             # Kinematic vectors
@@ -679,7 +652,7 @@
             # Check for collisions with platforms and portals
 
             # Collision check between ruby and platforms when falling
-            for platform in self.platform_group:
+            for platform in self.platform_tiles:
                 if platform.is_colliding(self):
                     self.position.y = platform.position.y - self.height + 5
                     self.velocity.y = 0
@@ -708,6 +681,7 @@
                 self.current_sprite = 0
 
             self.image = sprite_list[int(self.current_sprite)]
+
 
     class Portal(ZKSprite):
         def __init__(self, x, y, color, portal_group):
@@ -790,7 +764,7 @@
 
     class ZombieKnightDisplayable(renpy.Displayable):
 
-        def __init__(self, player, zombie_group, platform_group, portal_group, beam_group, ruby_group, main_group):
+        def __init__(self, player, zombie_group, platform_tiles, portal_group, beam_group, ruby_group, main_group):
 
             renpy.Displayable.__init__(self)
             # Initialize the game
@@ -811,7 +785,7 @@
             # Set displayables
             self.player = player
             self.zombie_group = zombie_group
-            self.platform_group = platform_group
+            self.platform_tiles = platform_tiles
             self.portal_group = portal_group
             self.beam_group = beam_group
             self.ruby_group = ruby_group
@@ -1036,7 +1010,7 @@
             if self.frame_count % 60 == 0:
                 # Only add a zombie if zombie creation time has passed
                 if self.round_time % self.zombie_creation_time == 0:
-                    zombie = Zombie(random.randint(100, self.WINDOW_WIDTH - 100), -100, self.platform_group, self.portal_group, self.round_number, 5 + self.round_number)
+                    zombie = Zombie(random.randint(100, self.WINDOW_WIDTH - 100), -100, self.platform_tiles, self.portal_group, self.round_number, 5 + self.round_number)
                     self.zombie_group.append(zombie)
 
         def check_collisions(self):
@@ -1060,7 +1034,7 @@
                         self.zombie_group.remove(zombie)
                         self.score += 25
 
-                        ruby = Ruby(self.WINDOW_WIDTH, self.platform_group, self.portal_group)
+                        ruby = Ruby(self.WINDOW_WIDTH, self.platform_tiles, self.portal_group)
                         self.ruby_group.append(ruby)
 
                     # The zombie isn't dead so take damage
@@ -1088,7 +1062,7 @@
                         if zombie.is_colliding(ruby):
                             self.ruby_group.remove(ruby)
                             renpy.sound.play("audio/zk_lost_ruby_sound.wav")
-                            zombie = Zombie(random.randint(100, self.WINDOW_WIDTH - 100), -100, self.platform_group, self.portal_group, self.round_number, 5 + self.round_number)
+                            zombie = Zombie(random.randint(100, self.WINDOW_WIDTH - 100), -100, self.platform_tiles, self.portal_group, self.round_number, 5 + self.round_number)
                             self.zombie_group.append(zombie)
         
         def check_round_completion(self):
@@ -1165,7 +1139,7 @@
 
     # Create sprite groups
     my_main_tile_group = []
-    my_platform_group = []
+    my_platform_tiles = []
 
     my_beam_group = []
 
@@ -1207,13 +1181,13 @@
                 Tile(j * 60, i * 60, 1, my_main_tile_group)
             # Platform tiles
             elif tile_map[i][j] == 2:
-                Tile(j * 60, i * 60, 2, my_main_tile_group, my_platform_group)
+                Tile(j * 60, i * 60, 2, my_main_tile_group, my_platform_tiles)
             elif tile_map[i][j] == 3:
-                Tile(j * 60, i * 60, 3, my_main_tile_group, my_platform_group)
+                Tile(j * 60, i * 60, 3, my_main_tile_group, my_platform_tiles)
             elif tile_map[i][j] == 4:
-                Tile(j * 60, i * 60, 4, my_main_tile_group, my_platform_group)
+                Tile(j * 60, i * 60, 4, my_main_tile_group, my_platform_tiles)
             elif tile_map[i][j] == 5:
-                Tile(j * 60, i * 60, 5, my_main_tile_group, my_platform_group)
+                Tile(j * 60, i * 60, 5, my_main_tile_group, my_platform_tiles)
             # Ruby Maker
             elif tile_map[i][j] == 6:
                 RubyMaker(j * 60 - 30, i * 60, my_main_tile_group)
@@ -1224,9 +1198,9 @@
                 Portal(j * 60, i * 60, "purple", my_portal_group)
             # Player
             elif tile_map[i][j] == 9:
-                my_player = ZKPlayer(j * 60 - 60, i * 60 + 60, my_platform_group, my_portal_group, my_beam_group)
+                my_player = ZKPlayer(j * 60 - 60, i * 60 + 60, my_platform_tiles, my_portal_group, my_beam_group)
 
-default zombie_knight = ZombieKnightDisplayable(my_player, my_zombie_group, my_platform_group, my_portal_group, my_beam_group, my_ruby_group, my_main_tile_group)
+default zombie_knight = ZombieKnightDisplayable(my_player, my_zombie_group, my_platform_tiles, my_portal_group, my_beam_group, my_ruby_group, my_main_tile_group)
 
 screen zombie_knight():
 
