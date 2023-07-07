@@ -1,10 +1,14 @@
 ﻿init python:
 
-    import math
     import random
     import pygame
 
     class Vector:
+        """
+        It's a vector.  It's an x/y coordinate pair.  It's whatever you dream,
+        baby.
+        """
+
         def __init__(self, x: float, y: float):
             self.x = x
             self.y = y
@@ -75,7 +79,7 @@
             """
             r = renpy.render(self.image, self.width, self.height, st, at)
             render.blit(r, (int(self.position.x), int(self.position.y)))
-        
+
         def update(self):
             pass
 
@@ -99,7 +103,7 @@
         """
         A static, collidable ZKSprite.
         """
-        def __init__(self, x, y, image_int, main_tile_group, sub_tile_group=[]):
+        def __init__(self, x, y, image_int):
             """
             Arguments:
 
@@ -110,14 +114,11 @@
             image_int (int): An integer that defines the sprite used by this
             tile, e.g. 1: dirt and 2-5: platforms.
 
-            main_tile_group (list): List of all the Tiles to be rendered.
-            
-            sub_tile_group (list): List of all the Tiles of this subtype, e.g.
-            Platforms.
+            misc_tile_group (list): List of all the Tiles to be rendered.
             """
             ZKSprite.__init__(self, 30, 30, x, y)
 
-            # Load in the correct image and append it to the correct 
+            # Load in the correct image and append it to the correct
             # sub_tile_group
 
             # Dirt tiles
@@ -126,19 +127,12 @@
             # Platform tiles
             elif image_int == 2:
                 self.image = Image("images/tiles/Tile (2).png")
-                sub_tile_group.append(self)
             elif image_int == 3:
                 self.image = Image("images/tiles/Tile (3).png")
-                sub_tile_group.append(self)
             elif image_int == 4:
                 self.image = Image("images/tiles/Tile (4).png")
-                sub_tile_group.append(self)
             elif image_int == 5:
                 self.image = Image("images/tiles/Tile (5).png")
-                sub_tile_group.append(self)
-
-            # Add every tile to the main group
-            main_tile_group.append(self)
 
 
     class ZKAnimated(ZKSprite):
@@ -147,7 +141,7 @@
         """
         def __init__(self, width, height, x, y):
             ZKSprite.__init__(self, width, height, x, y)
-    
+
         def generate_mirrored_animation(self, fname_pattern, start, end, step = 1):
             """
             Generates two mirrored lists of sprites based on files matching the
@@ -197,7 +191,7 @@
                 img = Image(fname_pattern.format(i))
                 right_sprites.append(img)
                 left_sprites.append(Transform(img, xzoom=-1.0))
-            
+
             return (right_sprites, left_sprites)
 
         def generate_animation(self, fname_pattern, start, end, step = 1):
@@ -241,7 +235,7 @@
             for i in range(start, end + 1 if step > 0 else end - 1, step):
                 sprites.append(Image(fname_pattern.format(i)))
             return sprites
-                
+
 
     class ZKPlayer(ZKAnimated):
         """
@@ -274,14 +268,14 @@
 
         attack_left_sprites : list
             List of sprites for the ZKPlayer's animation while attacking left.
-        
+
         current_sprite_index : float
             Current frame index represented as a float, which is floored to get
             the frame to be rendered.
 
         image : Image
             Current frame to be rendered.
-        
+
         platform_tiles : Tile[]
             List of platform Tiles used for collision detection.
 
@@ -302,18 +296,18 @@
 
         acceleration : Vector
             Current change in player velocity.
-        
+
         health : int
             ZKPlayer's health.
 
         starting_x : int
-            ZKPlayer's starting x position. This value is used for resetting 
+            ZKPlayer's starting x position. This value is used for resetting
             the player sprite to the start location when necessary.
 
         starting_y : int
-            ZKPlayer's starting y position. This value is used for resetting 
+            ZKPlayer's starting y position. This value is used for resetting
             the player sprite to the start location when necessary.
-            
+
         """
 
         # Constant variables
@@ -364,8 +358,8 @@
 
             Arguments:
 
-            keyboard (dict): Boolean flags for the keyboard controls indicating
-            whether they are currently pressed.
+            keyboard (KeyboardInput): Keyboard controls indicator class which is
+            used to track what keys are pressed.
 
             max_width (int): Viewport width used for detecting when player
             has reached the right side of the screen.
@@ -384,22 +378,9 @@
             self.check_collisions(max_width, max_height)
             self.check_animations()
 
-        def move(self, keyboard, max_width, can_trigger_space_action, can_trigger_shift_action):
+        def move(self, keyboard: KeyboardInput, max_width, can_trigger_space_action, can_trigger_shift_action):
             """
             Moves the player.
-
-            ...
-
-            Attributes:
-            -----------
-            velocity : Vector
-                Current player movement speed.
-                
-            acceleration : Vector
-                Current change in player velocity.
-
-            position : Vector
-                Current x and y location of player.
             """
 
             # Set the acceleration vector
@@ -408,14 +389,14 @@
             # If the user is pressing the left arrow key, set the x component of
             # the acceleration to be the value of the horizontal acceleration
             # constant variable inversed. Also animate the player to move left.
-            if keyboard["left"]:
+            if keyboard.left:
                 self.acceleration.x = -1 * self.HORIZONTAL_ACCELERATION
                 self.animate(self.move_left_sprites, 0.5)
 
             # If the user is pressing the right arrow key, set the x component
             # of the acceleration to be the value of the horizontal acceleration
             # constant variable. Also animate the player to move right.
-            elif keyboard["right"]:
+            elif keyboard.right:
                 self.acceleration.x = self.HORIZONTAL_ACCELERATION
                 self.animate(self.move_right_sprites, 0.5)
 
@@ -427,15 +408,15 @@
                     self.animate(self.idle_right_sprites, 0.5)
                 else:
                     self.animate(self.idle_left_sprites, 0.5)
-            
+
             # If the user is pressing the spacebar and is allowed to trigger the
             # space action, this triggers the jump method.
-            if keyboard["space"] and can_trigger_space_action:
+            if keyboard.space and can_trigger_space_action:
                 self.jump()
 
             # If the user is pressing the shift key and is allowed to trigger
             # the shift action, this triggers the fire method.
-            if keyboard["shift"] and can_trigger_shift_action:
+            if keyboard.shift and can_trigger_shift_action:
                 self.fire()
 
             # Calculate new kinematics values based on displacement formulas.
@@ -507,7 +488,7 @@
             # If the player jump animation should be triggered, check the
             # x velocity of the player to determine whether to render the right-
             # or left-facing version of the jumping sprites.
-            
+
             if self.animate_jump:
                 if self.velocity.x > 0:
                     self.animate(self.jump_right_sprites, 0.1)
@@ -612,6 +593,7 @@
         def __init__(self, x, y, beam_group, player):
             """
             Arguments:
+
             x (int): X-axis coordinate of the top-left of this Beam.
 
             y (int): Y-axis coordinate of the top-left of this Beam.
@@ -634,7 +616,7 @@
                 self.image = Transform(Image("images/player/slash.png"), xzoom=-1.0)
                 self.VELOCITY = -1 * self.VELOCITY
 
-            # Store starting x position of the Beam. 
+            # Store starting x position of the Beam.
             self.starting_x = x
 
             # Attach sprite group.
@@ -692,12 +674,13 @@
             -----------
             gender : int
                 A random integer, between 0 and 1, used to determine whether the
-                Zombie sprite rendered is a boy or a girl.
-            
+                Zombie sprite rendered is a boy or a girl. The  gender is purely
+                decorative.
+
             direction : int
                 A random choice, either 1 or -1, used to determine whether the
                 Zombie moves left or right.
-            
+
             animate_death : bool
                 Whether Zombie death is being animated.
 
@@ -706,8 +689,8 @@
 
             velocity : Vector
                 Current Zombie movement speed, determined by direction times a
-                random integer, between min_speed and max_speed.
-                
+                random integer, between `min_speed` and `max_speed`.
+
             acceleration : Vector
                 Current change in Zombie velocity.
 
@@ -715,12 +698,16 @@
                 Whether the Zombie is considered dead, the state in which it has
                 been hit by a Beam but has not been jumped on to make it
                 disappear.
-            
-            frame_count : int
-                The number of frames that has passed 
 
-            round_time : int
+            frames_dead : int
+                The number of frames that have passed since this Zombie died.
+                This value is used to keep track of when to increment
+                `seconds_dead`.
 
+            seconds_dead : int
+                The number of seconds this zombie has been dead and on the
+                ground. This value is used to determine when the zombie should
+                reanimate.
             """
             ZKAnimated.__init__(self, 120, 120, x, y)
 
@@ -766,8 +753,8 @@
 
             # Initialize zombie values.
             self.is_dead = False
-            self.frame_count = 0
-            self.round_time = 0
+            self.frames_dead = 0
+            self.seconds_dead = 0
 
         def update(self, max_width, max_height):
             """
@@ -782,16 +769,16 @@
 
             # Determine when the zombie should rise from the dead by checking
             # the is_dead boolean flag and if it is set, incrementing
-            # frame_count by one every update loop until sixty frames have
-            # passed. This adds one to the round_time and when round_time equals
+            # frames_dead by one every update loop until sixty frames have
+            # passed. This adds one to the seconds_dead and when seconds_dead equals
             # the same as the zombie's rise_time constant variable, the
             # animate_rise boolean flag is triggered and the
             # current_sprite_index is reset so the animation occurs properly.
             if self.is_dead:
-                self.frame_count += 1
-                if self.frame_count % 60 == 0:
-                    self.round_time += 1
-                    if self.round_time == self.RISE_TIME:
+                self.frames_dead += 1
+                if self.frames_dead % 60 == 0:
+                    self.seconds_dead += 1
+                    if self.seconds_dead == self.RISE_TIME:
                         self.animate_rise = True
                         # When the zombie died, the image was kept as the last image.
                         # When it rises, we want to start at index 0 of our rise_sprite lists.
@@ -921,12 +908,12 @@
                 # Once the current_sprite_index has been reset, if the
                 # reanimation boolean has been triggered, make it False, as well
                 # as setting the is_dead boolean to False and resetting the
-                # frame_count and round_time to zero.
+                # frames_dead and seconds_dead to zero.
                 if self.animate_rise:
                     self.animate_rise = False
                     self.is_dead = False
-                    self.frame_count = 0
-                    self.round_time = 0
+                    self.frames_dead = 0
+                    self.seconds_dead = 0
 
             self.image = sprite_list[int(self.current_sprite_index)]
 
@@ -934,47 +921,47 @@
     class RubyMaker(ZKAnimated):
         """
         The transparent RubyMaker from which all Rubies are generated.
+ 
+        ...
+
+        Attributes:
+        -----------
+        rubymaker_sprites : Displayable[]
+            Sprites for the ruby maker animation.
+
+        current_sprite_index : int
+            Index of the current sprite in the animation being rendered.        
+
+        image : Image
+            Current frame to be rendered, determined by referencing the
+            sprite list using the current_sprite_index.
         """
 
-        def __init__(self, x, y, main_tile_group):
+        def __init__(self, x, y):
             """
             Arguments:
 
             x (int): X-axis coordinate of the top-left of this RubyMaker.
 
             y (int): Y-axis coordinate of the top-left of this RubyMaker.
-
-            main_tile_group (list): List of all the Tiles and RubyMaker to be
-            rendered.
-            
-            ...
-
-            Attributes:
-            -----------
-            image : Image
-                Current frame to be rendered, determined by referencing the
-                sprite list using the current_sprite_index.
             """
-
             ZKAnimated.__init__(self, 60, 60, x, y)
 
             # Generate sprite list.
-            self.ruby_sprites = self.generate_animation("images/ruby_maker/tile00{}.png", 0, 6)
+            self.rubymaker_sprites = self.generate_animation("images/ruby_maker/tile00{}.png", 0, 6)
 
             # Reset current_sprite_index.
             self.current_sprite_index = 0
 
-            self.image = self.ruby_sprites[self.current_sprite_index]
+            self.image = self.rubymaker_sprites[self.current_sprite_index]
 
-            # Add RubyMaker to main tile group.
-            main_tile_group.append(self)
 
         def update(self):
             """
             Updates the RubyMaker by calling the animate method.
             """
 
-            self.animate(self.ruby_sprites, 0.25)
+            self.animate(self.rubymaker_sprites, 0.25)
 
         def animate(self, sprite_list, speed):
             """
@@ -1019,6 +1006,7 @@
         def __init__(self, max_width, platform_tiles, portal_group):
             """
             Arguments:
+
             max_width (int): Viewport width used for detecting when the Ruby has
             reached the right side of the screen.
 
@@ -1125,6 +1113,7 @@
 
             speed (float): Speed at which the frames of the sprites should be
             animated.
+
             ...
 
             Attributes:
@@ -1148,78 +1137,58 @@
 
     class Portal(ZKAnimated):
         """
-        
+        Responsible for teleporting the player, zombies, and rubies diagonally
+        across the screen.
         """
-        def __init__(self, x, y, color, portal_group):
+        def __init__(self, x, y, color):
+            """
+            Arguments:
+
+            x (int): X-axis coordinate of the top-left of this portal.
+
+            y (int): Y-axis coordinate of the top-left of this portal.
+
+            color (str): A string representing what color the portal should be.
+            The color is purely decorative.
+            """
             ZKAnimated.__init__(self, 120, 120, x, y)
 
-            # Animation frames
-            self.portal_sprites = []
-
-            # Portal animation
             if color == "green":
-                # Green portal
-                self.portal_sprites.append(Image("images/portals/green/tile000.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile001.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile002.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile003.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile004.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile005.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile006.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile007.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile008.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile009.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile010.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile011.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile012.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile013.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile014.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile015.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile016.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile017.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile018.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile019.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile020.png"))
-                self.portal_sprites.append(Image("images/portals/green/tile021.png"))
-            else:
-                # Purple portal
-                self.portal_sprites.append(Image("images/portals/purple/tile000.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile001.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile002.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile003.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile004.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile005.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile006.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile007.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile008.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile009.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile010.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile011.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile012.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile013.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile014.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile015.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile016.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile017.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile018.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile019.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile020.png"))
-                self.portal_sprites.append(Image("images/portals/purple/tile021.png"))
+                self.portal_sprites = self.generate_animation("images/portals/green/tile0{:02d}.png", 0, 21)
+            else:  # purple
+                self.portal_sprites = self.generate_animation("images/portals/purple/tile0{:02d}.png", 0, 21)
 
-            # Load an image
+            # Set the current_sprite_index to a random integer from 0 to the
+            # length of self.portal_sprites minus one. This is so the portals
+            # start on a random frame and don't all animate in the exact same
+            # way.
             self.current_sprite_index = random.randint(0, len(self.portal_sprites) - 1)
+
             self.image = self.portal_sprites[self.current_sprite_index]
 
-            # Add to the portal group
-            portal_group.append(self)
-
         def update(self):
-            # Update the portal
+            """
+            Update the portal by calling the animate method.
+            """
 
             self.animate(self.portal_sprites, 0.2)
 
         def animate(self, sprite_list, speed):
-            # Animate the portal
+            """
+            Animate the portal.
+
+            Arguments:
+
+            sprite_list (Displayable[]): List of sprites to be rendered.
+
+            speed (float): Speed at which the frames of the sprites should be
+            animated.
+            """
+
+            # If the current_sprite_index is less than the total length of the
+            # current list of sprite frames minus one (because the index starts
+            # at zero), increment the current_sprite_index by the speed of the
+            # animation. Else, reset the current_sprite_index to zero.
             if self.current_sprite_index < len(sprite_list) - 1:
                 self.current_sprite_index += speed
             else:
@@ -1228,25 +1197,103 @@
             self.image = sprite_list[int(self.current_sprite_index)]
 
 
-    class ZombieKnightDisplayable(renpy.Displayable):
+    class KeyboardInput():
+        def __init__(self):
+            self.up = False
+            self.down = False
+            self.left = False
+            self.right = False
+            self.space = False
+            self.shift = False
+            self.enter = False
 
-        def __init__(self, player, zombie_group, platform_tiles, portal_group, beam_group, ruby_group, main_tile_group):
+
+    class ZombieKnightDisplayable(renpy.Displayable):
+        """
+        The combined displayable and game class. This is the meat of
+        Creator-Defined Displayables and what works together with all the other
+        classes to make Zombie Knight work.
+
+        ...
+
+        Attributes:
+        -----------
+        score : int
+            Points the player has earned.
+
+        round_number : int
+            Game round the player is currently on.
+
+        frame_count : int
+            Number of frames that have passed since the game started.
+
+        round_time : int
+            The number of seconds remaining in the current round.
+
+        zombie_creation_interval : int
+            Number of seconds between zombie spawns.  This number decreases with
+            each round.
+
+        player : ZKPlayer
+            Player character.
+        
+        zombie_group : Zombie[]
+            List of zombie instances currently in the game.
+        
+        platform_tiles : Tile[]
+            List of platform tiles currently in the game.
+        
+        portal_group : Portal[]
+            List of portals currently on the map.
+        
+        beam_group : Beam[]
+            List of Beam instances (slash animations) currently being rendered.
+        
+        ruby_group : Ruby[]
+            List of Ruby items currently spawned on the map.
+        
+        misc_tile_group : ZKSprite[]
+            List of all platform tiles, decorational tiles (dirt), and the ruby
+            spawner.
+        
+        pause_background : Solid
+            Background displayable for the pause screen when showing.
+
+        main_text : str
+            Title string for the game.
+        
+        mty : int|float
+            Y-axis position of the main text.
+
+        sub_text : str
+            Subtitle string for the game.
+
+        sty : int|float
+            Y-axis position of the subtitle.
+
+        
+
+        
+        """
+
+        # Constant variables
+        STARTING_ROUND_TIME = 30  # Seconds until the round ends
+        STARTING_ZOMBIE_CREATION_INTERVAL = 5  # Seconds between zombie spawns
+        RUBY_POINT_VALUE = 100  # Points that a Ruby is worth
+        RUBY_HEALTH_VALUE = 10 # Health points that a Ruby restores
+        WINDOW_WIDTH = 1920  # Viewport width
+        WINDOW_HEIGHT = 1080  # Viewport width
+
+        def __init__(self, player, zombie_group, platform_tiles, portal_group, beam_group, ruby_group, misc_tile_group):
 
             renpy.Displayable.__init__(self)
-            # Initialize the game
-
-            # Set constant variables
-            self.STARTING_ROUND_TIME = 30
-            self.STARTING_ZOMBIE_CREATION_TIME = 5
-            self.WINDOW_WIDTH = 1920
-            self.WINDOW_HEIGHT = 1080
 
             # Set game values
             self.score = 0
             self.round_number = 1
             self.frame_count = 0
             self.round_time = self.STARTING_ROUND_TIME
-            self.zombie_creation_time = self.STARTING_ZOMBIE_CREATION_TIME
+            self.zombie_creation_interval = self.STARTING_ZOMBIE_CREATION_INTERVAL
 
             # Set displayables
             self.player = player
@@ -1255,28 +1302,21 @@
             self.portal_group = portal_group
             self.beam_group = beam_group
             self.ruby_group = ruby_group
-            self.main_tile_group = main_tile_group
+            self.misc_tile_group = misc_tile_group
 
             self.pause_background = Solid("#000000", xsize=self.WINDOW_WIDTH, ysize=self.WINDOW_HEIGHT)
-            self.pbx = 0
-            self.pby = 0
 
             self.main_text = _("Zombie Knight")
-            self.mtx = 0
             self.mty = self.WINDOW_HEIGHT / 2 - 100
 
             self.sub_text = _("Press Enter or Start to begin")
-            self.stx = 0
             self.sty = self.WINDOW_HEIGHT / 2 + 100
 
-            # The time of the past render-frame
-            self.oldst = None
-
-            self.keyboard = {"up": False, "down": False, "left": False, "right": False, "space": False, "shift": False, "enter": False}
+            self.keyboard = KeyboardInput()
             self.can_trigger_space_action = True
             self.can_trigger_shift_action = True
             self.is_paused = False
-            
+
             self.lose = False
 
             return
@@ -1287,42 +1327,35 @@
             # The Render object we'll be drawing into
             r = renpy.Render(width, height)
 
-            # Figure out the time elapsed since the previous frame
-            if self.oldst is None:
-                self.oldst = st
-
-            dtime = st - self.oldst
-            self.oldst = st
-            
             # This draws the pause background
-            def pause_background(pbx, pby):
+            def pause_background():
 
                 # Render the pause background
                 pause_background = renpy.render(self.pause_background, width, height, st, at)
 
                 # renpy.render returns a Render object, which we can
                 # blit to the Render we're making
-                r.blit(pause_background, (int(pbx), int(pby)))
-            
+                r.blit(pause_background, (0, 0))
+
             # This draws the main text
-            def main_text(mtx, mty):
+            def main_text(mty):
 
                 # Render the main text
                 main_text = renpy.render(Fixed(Text(self.main_text, size=60, color="#00bf00", outlines=[ (4, "#007300", 0, 0) ], font="gui/font/Poultrygeist.ttf", xalign=0.5)), width, height, st, at)
 
                 # renpy.render returns a Render object, which we can
                 # blit to the Render we're making
-                r.blit(main_text, (int(mtx), int(mty)))
-            
+                r.blit(main_text, (0, int(mty)))
+
             # This draws the sub text
-            def sub_text(stx, sty):
+            def sub_text(sty):
 
                 # Render the sub text
                 sub_text = renpy.render(Fixed(Text(self.sub_text, size=60, color="#FFFFFF", outlines=[ (4, "#cccccc", 0, 0) ], font="gui/font/Poultrygeist.ttf", xalign=0.5)), width, height, st, at)
 
                 # renpy.render returns a Render object, which we can
                 # blit to the Render we're making
-                r.blit(sub_text, (int(stx), int(sty)))
+                r.blit(sub_text, (0, int(sty)))
 
             if not self.is_paused:
 
@@ -1353,19 +1386,24 @@
                     portal.update()
                     portal.render(r, st, at)
 
+                # Render the Platforms
+                for platform in self.platform_tiles:
+                    platform.update()
+                    platform.render(r, st, at)
+
                 # Render the tiles
-                for tile in self.main_tile_group:
+                for tile in self.misc_tile_group:
                     tile.update()
                     tile.render(r, st, at)
 
                 self.update()
             else:
                 renpy.music.set_pause(True, channel="music")
-                pause_background(self.pbx, self.pby)
+                pause_background()
                 main_text(self.mtx, self.mty)
                 sub_text(self.stx, self.sty)
 
-                if self.keyboard["enter"]:
+                if self.keyboard.enter:
                     self.is_paused = False
                     renpy.music.set_pause(False, channel="music")
 
@@ -1378,73 +1416,73 @@
 
             if ev.type == pygame.KEYDOWN:
                 if ev.key == pygame.K_UP:
-                    self.keyboard["up"] = True
+                    self.keyboard.up = True
                 elif ev.key == pygame.K_DOWN:
-                    self.keyboard["down"] = True
+                    self.keyboard.down = True
                 elif ev.key == pygame.K_LEFT:
-                    self.keyboard["left"] = True
+                    self.keyboard.left = True
                 elif ev.key == pygame.K_RIGHT:
-                    self.keyboard["right"] = True
+                    self.keyboard.right = True
                 elif ev.key == pygame.K_SPACE:
-                    self.keyboard["space"] = True
+                    self.keyboard.space = True
                     self.can_trigger_space_action = True
                 elif ev.key == pygame.K_LSHIFT or ev.key == pygame.K_RSHIFT:
-                    self.keyboard["shift"] = True
+                    self.keyboard.shift = True
                     self.can_trigger_shift_action = True
                 elif ev.key == pygame.K_RETURN:
-                    self.keyboard["enter"] = True
+                    self.keyboard.enter = True
             elif ev.type == pygame.KEYUP:
                 if ev.key == pygame.K_UP:
-                    self.keyboard["up"] = False
+                    self.keyboard.up = False
                 elif ev.key == pygame.K_DOWN:
-                    self.keyboard["down"] = False
+                    self.keyboard.down = False
                 elif ev.key == pygame.K_LEFT:
-                    self.keyboard["left"] = False
+                    self.keyboard.left = False
                 elif ev.key == pygame.K_RIGHT:
-                    self.keyboard["right"] = False
+                    self.keyboard.right = False
                 elif ev.key == pygame.K_SPACE:
-                    self.keyboard["space"] = False
+                    self.keyboard.space = False
                 elif ev.key == pygame.K_LSHIFT or ev.key == pygame.K_RSHIFT:
-                    self.keyboard["shift"] = False
+                    self.keyboard.shift = False
                 elif ev.key == pygame.K_RETURN:
-                    self.keyboard["enter"] = False
+                    self.keyboard.enter = False
             else:
                 if renpy.map_event(ev, "pad_a_press"):
-                    self.keyboard["space"] = True
+                    self.keyboard.space = True
                     self.can_trigger_space_action = True
                 elif renpy.map_event(ev, "pad_a_release"):
-                    self.keyboard["space"] = False
+                    self.keyboard.space = False
 
                 if renpy.map_event(ev, "pad_b_press"):
-                    self.keyboard["shift"] = True
+                    self.keyboard.shift = True
                     self.can_trigger_shift_action = True
                 elif renpy.map_event(ev, "pad_b_release"):
-                    self.keyboard["shift"] = False
+                    self.keyboard.shift = False
 
                 if renpy.map_event(ev, "pad_start_press"):
-                    self.keyboard["enter"] = True
+                    self.keyboard.enter = True
                 elif renpy.map_event(ev, "pad_start_release"):
-                    self.keyboard["enter"] = False
+                    self.keyboard.enter = False
 
                 if renpy.map_event(ev, "pad_lefty_neg") or renpy.map_event(ev, "pad_righty_neg") or renpy.map_event(ev, "pad_dpup_press"):
-                    self.keyboard["up"] = True
+                    self.keyboard.up = True
                 elif ((renpy.map_event(ev, "pad_lefty_zero") or renpy.map_event(ev, "pad_righty_zero")) and self.keyboard["up"]) or renpy.map_event(ev, "pad_dpup_release"):
-                    self.keyboard["up"] = False
+                    self.keyboard.up = False
 
                 if renpy.map_event(ev, "pad_lefty_pos") or renpy.map_event(ev, "pad_righty_pos") or renpy.map_event(ev, "pad_dpdown_press"):
-                    self.keyboard["down"] = True
+                    self.keyboard.down = True
                 elif ((renpy.map_event(ev, "pad_lefty_zero") or renpy.map_event(ev, "pad_righty_zero")) and self.keyboard["down"]) or renpy.map_event(ev, "pad_dpdown_release"):
-                    self.keyboard["down"] = False
-            
+                    self.keyboard.down = False
+
                 if renpy.map_event(ev, "pad_leftx_neg") or renpy.map_event(ev, "pad_rightx_neg") or renpy.map_event(ev, "pad_dpleft_press"):
-                    self.keyboard["left"] = True
+                    self.keyboard.left = True
                 elif ((renpy.map_event(ev, "pad_leftx_zero") or renpy.map_event(ev, "pad_rightx_zero")) and self.keyboard["left"]) or renpy.map_event(ev, "pad_dpleft_release"):
-                    self.keyboard["left"] = False
+                    self.keyboard.left = False
 
                 if renpy.map_event(ev, "pad_leftx_pos") or renpy.map_event(ev, "pad_rightx_pos") or renpy.map_event(ev, "pad_dpright_press"):
-                    self.keyboard["right"] = True
+                    self.keyboard.right = True
                 elif ((renpy.map_event(ev, "pad_leftx_zero") or renpy.map_event(ev, "pad_rightx_zero")) and self.keyboard["right"]) or renpy.map_event(ev, "pad_dpright_release"):
-                    self.keyboard["right"] = False
+                    self.keyboard.right = False
 
             # Ensure the screen updates
             renpy.restart_interaction()
@@ -1471,17 +1509,17 @@
 
         def add_zombie(self):
             #Add a zombie to the game
-            
+
             # Check to add a zombie every second
             if self.frame_count % 60 == 0:
                 # Only add a zombie if zombie creation time has passed
-                if self.round_time % self.zombie_creation_time == 0:
+                if self.round_time % self.zombie_creation_interval == 0:
                     zombie = Zombie(random.randint(100, self.WINDOW_WIDTH - 100), -100, self.platform_tiles, self.portal_group, self.round_number, 5 + self.round_number)
                     self.zombie_group.append(zombie)
 
         def check_collisions(self):
             #Check collisions that affect gameplay
-            
+
             # See if any beam in the beam group hit a zombie in the zombie group
             for zombie in self.zombie_group:
                 for beam in self.beam_group:
@@ -1516,8 +1554,8 @@
                 if self.player.is_colliding(ruby):
                     renpy.sound.play("audio/zk_ruby_pickup_sound.wav")
                     self.ruby_group.remove(ruby)
-                    self.score += 100
-                    self.player.health += 10
+                    self.score += self.RUBY_POINT_VALUE
+                    self.player.health += self.RUBY_HEALTH_VALUE
                     if self.player.health > self.player.STARTING_HEALTH:
                         self.player.health = self.player.STARTING_HEALTH
 
@@ -1530,7 +1568,7 @@
                             renpy.sound.play("audio/zk_lost_ruby_sound.wav")
                             zombie = Zombie(random.randint(100, self.WINDOW_WIDTH - 100), -100, self.platform_tiles, self.portal_group, self.round_number, 5 + self.round_number)
                             self.zombie_group.append(zombie)
-        
+
         def check_round_completion(self):
             # Check if the player survived a single night
 
@@ -1542,7 +1580,7 @@
 
             if self.player.health <= 0:
                 self.lose = True
-                
+
                 renpy.timeout(0)
 
         def start_new_round(self):
@@ -1551,8 +1589,8 @@
             self.round_number += 1
 
             # Decrease zombie creation time which means zombies are created faster
-            if self.round_number < self.STARTING_ZOMBIE_CREATION_TIME:
-                self.zombie_creation_time -= 1
+            if self.round_number < self.STARTING_ZOMBIE_CREATION_INTERVAL:
+                self.zombie_creation_interval -= 1
 
             # Reset round values
             self.round_time = self.STARTING_ROUND_TIME
@@ -1572,14 +1610,14 @@
 
             # Reset game values
             self.lose = False
-            self.keyboard = {"up": False, "down": False, "left": False, "right": False, "space": False, "shift": False, "enter": False}
+            self.keyboard = KeyboardInput()
             self.can_trigger_space_action = True
             self.can_trigger_shift_action = True
 
             self.score = 0
             self.round_number = 1
             self.round_time = self.STARTING_ROUND_TIME
-            self.zombie_creation_time = self.STARTING_ZOMBIE_CREATION_TIME
+            self.zombie_creation_interval = self.STARTING_ZOMBIE_CREATION_INTERVAL
 
             # Reset the player
             self.player.health = self.player.STARTING_HEALTH
@@ -1604,7 +1642,7 @@
         return Text(_("Sunrise In: ") + "%d" % zombie_knight.round_time, size=40, color="#FFFFFF", outlines=[ (4, "#cccccc", 0, 0) ], font="gui/font/Pixel.ttf"), .1
 
     # Create sprite groups
-    my_main_tile_group = []
+    my_misc_tile_group = []
     my_platform_tiles = []
 
     my_beam_group = []
@@ -1644,29 +1682,29 @@
         for j in range(len(tile_map[i])):
             # Dirt tile
             if tile_map[i][j] == 1:
-                Tile(j * 60, i * 60, 1, my_main_tile_group)
+                my_misc_tile_group.append(Tile(j * 60, i * 60, 1))
             # Platform tiles
             elif tile_map[i][j] == 2:
-                Tile(j * 60, i * 60, 2, my_main_tile_group, my_platform_tiles)
+                my_platform_tiles.append(Tile(j * 60, i * 60, 2))
             elif tile_map[i][j] == 3:
-                Tile(j * 60, i * 60, 3, my_main_tile_group, my_platform_tiles)
+                my_platform_tiles.append(Tile(j * 60, i * 60, 3))
             elif tile_map[i][j] == 4:
-                Tile(j * 60, i * 60, 4, my_main_tile_group, my_platform_tiles)
+                my_platform_tiles.append(Tile(j * 60, i * 60, 4))
             elif tile_map[i][j] == 5:
-                Tile(j * 60, i * 60, 5, my_main_tile_group, my_platform_tiles)
+                my_platform_tiles.append(Tile(j * 60, i * 60, 5))
             # Ruby Maker
             elif tile_map[i][j] == 6:
-                RubyMaker(j * 60 - 30, i * 60, my_main_tile_group)
+                my_misc_tile_group.append(RubyMaker(j * 60 - 30, i * 60))
             # Portals
             elif tile_map[i][j] == 7:
-                Portal(j * 60, i * 60, "green", my_portal_group)
+                my_portal_group.append(Portal(j * 60, i * 60, "green"))
             elif tile_map[i][j] == 8:
-                Portal(j * 60, i * 60, "purple", my_portal_group)
+                my_portal_group.append(Portal(j * 60, i * 60, "purple"))
             # Player
             elif tile_map[i][j] == 9:
                 my_player = ZKPlayer(j * 60 - 60, i * 60 + 60, my_platform_tiles, my_portal_group, my_beam_group)
 
-default zombie_knight = ZombieKnightDisplayable(my_player, my_zombie_group, my_platform_tiles, my_portal_group, my_beam_group, my_ruby_group, my_main_tile_group)
+default zombie_knight = ZombieKnightDisplayable(my_player, my_zombie_group, my_platform_tiles, my_portal_group, my_beam_group, my_ruby_group, my_misc_tile_group)
 
 screen zombie_knight():
 
