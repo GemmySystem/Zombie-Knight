@@ -4,7 +4,6 @@
     import random
     import pygame
 
-    # Define classes
     class Vector:
         def __init__(self, x: float, y: float):
             self.x = x
@@ -31,23 +30,47 @@
 
     class ZKSprite():
         """
-        The base class for all sprites and tiles for Zombie Knight.
+        The base class for all sprites or tiles for Zombie Knight.
 
         Provides rendering and collision detection methods.
         """
 
         def __init__(self, width, height, x, y):
+            """
+            Arguments:
+
+            width (int): How wide the sprite or tile is in pixels.
+
+            height (int): How tall the sprite or tile is in pixels.
+
+            x (int): X-axis coordinate of the top-left of this sprite or tile.
+
+            y (int): Y-axis coordinate of the top-left of this sprite or tile.
+
+            ...
+
+            Attributes:
+            -----------
+            position : Vector
+                The x and y Vector location of the sprite or tile.
+
+            """
             self.width = width
             self.height = height
             self.position = Vector(x, y)
 
         def render(self, render, st, at):
             """
-            Renders the sprite's image on the given displayable using Ren'Py's render methods.
+            Renders the sprite's image on the given displayable using Ren'Py's
+            render methods.
 
             Arguments:
-            render (renpy.Render): Ren'Py render object onto which this sprite will be rendered.
+
+            render (renpy.Render): Ren'Py render object onto which this sprite
+            will be rendered.
+
             st (float): Shown timebase in seconds.
+
             at (float): Animation timebase in seconds.
             """
             r = renpy.render(self.image, self.width, self.height, st, at)
@@ -61,6 +84,7 @@
             Tests whether this sprite is colliding with another.
 
             Arguments:
+
             other (ZKSprite): Other sprite to test for collision with.
             """
             return (
@@ -78,15 +102,24 @@
         def __init__(self, x, y, image_int, main_tile_group, sub_tile_group=[]):
             """
             Arguments:
+
             x (int): X-axis coordinate of the top-left of this tile.
+
             y (int): Y-axis coordinate of the top-left of this tile.
-            image_int (int): An integer that defines the sprite used by this tile, e.g. 1: dirt and 2-5: platforms.
+
+            image_int (int): An integer that defines the sprite used by this
+            tile, e.g. 1: dirt and 2-5: platforms.
+
             main_tile_group (list): List of all the Tiles to be rendered.
-            sub_tile_group (list): List of all the Tiles of this subtype, e.g. Platforms.
+            
+            sub_tile_group (list): List of all the Tiles of this subtype, e.g.
+            Platforms.
             """
             ZKSprite.__init__(self, 30, 30, x, y)
 
-            # Load in the correct image and append it to the correct sub_tile_group
+            # Load in the correct image and append it to the correct 
+            # sub_tile_group
+
             # Dirt tiles
             if image_int == 1:
                 self.image = Image("images/tiles/Tile (1).png")
@@ -106,6 +139,7 @@
 
             # Add every tile to the main group
             main_tile_group.append(self)
+
 
     class ZKAnimated(ZKSprite):
         """
@@ -132,13 +166,13 @@
             ```
 
             This function returns two lists, a righthand side and a lefthand
-            side.  The righthand list is the sprites loaded as-is, where the
+            side. The righthand list is the sprites loaded as-is, where the
             lefthand side is the x-axis inversion of the loaded sprites.
 
             Arguments:
 
             fname_pattern (str): Filename string pattern to be used with
-            Python's string `format` function.  This will be given a single int
+            Python's string `format` function. This will be given a single int
             value from the range of numbers defined by `start`, `end`, and
             `step`.
 
@@ -167,6 +201,42 @@
             return (right_sprites, left_sprites)
 
         def generate_animation(self, fname_pattern, start, end, step = 1):
+            """
+            Generates a list of sprites based on files matching the
+            given `fname_pattern` interpolated with numbers from `start` to
+            `end` (inclusive) stepping by `step` at a time.
+
+            For example, given the inputs `("hello_{}.png", 1, 5, 1)`, this
+            method would attempt to load sprites for the following source image
+            files:
+            ```
+            hello_1.png
+            hello_2.png
+            hello_3.png
+            hello_4.png
+            hello_5.png
+            ```
+
+            Arguments:
+
+            fname_pattern (str): Filename string pattern to be used with
+            Python's string `format` function. This will be given a single int
+            value from the range of numbers defined by `start`, `end`, and
+            `step`.
+
+            start (int): Starting index for the number series that will be
+            generated from this value to `end`.
+
+            end (int): Ending index for the number series that will be generated
+            from `start` to this value.
+
+            step (int): Step by which the number series from `start` to `end`
+            will be generated.
+
+            Returns:
+
+            sprites (Displayable[]): Sprite list.
+            """
             sprites = []
             for i in range(start, end + 1 if step > 0 else end - 1, step):
                 sprites.append(Image(fname_pattern.format(i)))
@@ -183,137 +253,225 @@
         -----------
         move_right_sprites : list
             List of sprites for the ZKPlayer's right movement animation.
+
         move_left_sprites : list
             List of sprites for the ZKPlayer's left movement animation.
+
         idle_right_sprites : list
             List of sprites for the ZKPlayer's idle animation while facing right.
+
         idle_left_sprites : list
             List of sprites for the ZKPlayer's idle animation while facing left.
+
         jump_right_sprites : list
             List of sprites for the ZKPlayer's animation while jumping right.
+
         jump_left_sprites : list
             List of sprites for the ZKPlayer's animation while jumping left.
+
         attack_right_sprites : list
             List of sprites for the ZKPlayer's animation while attacking right.
+
         attack_left_sprites : list
             List of sprites for the ZKPlayer's animation while attacking left.
         
-        current_sprite : float
-            Current frame index represented as a float, which is floored to get the frame to be rendered.
+        current_sprite_index : float
+            Current frame index represented as a float, which is floored to get
+            the frame to be rendered.
+
         image : Image
             Current frame to be rendered.
         
         platform_tiles : Tile[]
             List of platform Tiles used for collision detection.
+
         portal_group : Portal[]
             List of Portals used for collision detection.
+
         beam_group : Beam[]
             List of Beams into which "slash" sprites will be inserted.
 
         animate_jump : bool
             Whether jumping is being animated.
+
         animate_fire : bool
             Whether slashing is being animated.
 
         velocity : Vector
-            Current character velocity.
+            Current player movement speed.
+
         acceleration : Vector
-            Current character acceleration.
+            Current change in player velocity.
+        
+        health : int
+            ZKPlayer's health.
+
+        starting_x : int
+            ZKPlayer's starting x position. This value is used for resetting 
+            the player sprite to the start location when necessary.
+
+        starting_y : int
+            ZKPlayer's starting y position. This value is used for resetting 
+            the player sprite to the start location when necessary.
             
         """
 
         # Constant variables
-        HORIZONTAL_ACCELERATION = 2
-        HORIZONTAL_FRICTION = 0.15
-        VERTICAL_ACCELERATION = 0.8  # Gravity
-        VERTICAL_JUMP_SPEED = 23  # Determines how high the player can jump
-        STARTING_HEALTH = 100
+        HORIZONTAL_ACCELERATION = 2  # Speed at which the player can move horizontally.
+        HORIZONTAL_FRICTION = 0.15  # Amount the player is slowed down by friction.
+        VERTICAL_ACCELERATION = 0.8  # Amount of gravity applied to the player.
+        VERTICAL_JUMP_SPEED = 23  # Determines how high the player can jump.
+        STARTING_HEALTH = 100  # Beginning amount of player health.
 
         def __init__(self, x, y, platform_tiles, portal_group, beam_group):
             ZKAnimated.__init__(self, 80, 118, x, y)
 
-            # Animation frames
+            # Generate pairs of sprite lists.
             self.move_right_sprites, self.move_left_sprites = self.generate_mirrored_animation("images/player/run/Run ({}).png", 1, 10)
             self.idle_right_sprites, self.idle_left_sprites = self.generate_mirrored_animation("images/player/idle/Idle ({}).png", 1, 10)
             self.jump_right_sprites, self.jump_left_sprites = self.generate_mirrored_animation("images/player/jump/Jump ({}).png", 1, 10)
             self.attack_right_sprites, self.attack_left_sprites = self.generate_mirrored_animation("images/player/attack/Attack ({}).png", 1, 10)
 
-            # Load image
-            self.current_sprite = 0
-            self.image = self.idle_right_sprites[self.current_sprite]
+            # Reset current_sprite_index.
+            self.current_sprite_index = 0
 
-            # Attach sprite groups
+            # Render initial sprite, determined by referencing the idle right
+            # sprite list using the current_sprite_index.
+            self.image = self.idle_right_sprites[self.current_sprite_index]
+
+            # Attach sprite groups.
             self.platform_tiles = platform_tiles
             self.portal_group = portal_group
             self.beam_group = beam_group
 
-            # Animation booleans
+            # Set animation booleans.
             self.animate_jump = False
             self.animate_fire = False
 
-            # Kinematics vectors
+            # Initialize kinematics vectors.
             self.velocity = Vector(0, 0)
             self.acceleration = Vector(0, self.VERTICAL_ACCELERATION)
 
-            # Set initial player values
+            # Initialize player values.
             self.health = self.STARTING_HEALTH
             self.starting_x = x
             self.starting_y = y
 
         def update(self, keyboard, max_width, max_height, can_trigger_space_action, can_trigger_shift_action):
-            #Update the player
+            """
+            Updates the player by calling the move, check_collisions, and
+            check_animations methods.
+
+            Arguments:
+
+            keyboard (dict): Boolean flags for the keyboard controls indicating
+            whether they are currently pressed.
+
+            max_width (int): Viewport width used for detecting when player
+            has reached the right side of the screen.
+
+            max_height (int): Viewport height used for detecting when player
+            has entered portal on top or bottom of screen.
+
+            can_trigger_space_action (bool): Boolean flag for whether player is
+            able to trigger space action, e.g. jump.
+
+            can_trigger_shift_action (bool): Boolean flag for whether player is
+            able to trigger shift action, e.g. fire.
+            """
 
             self.move(keyboard, max_width, can_trigger_space_action, can_trigger_shift_action)
             self.check_collisions(max_width, max_height)
             self.check_animations()
 
         def move(self, keyboard, max_width, can_trigger_space_action, can_trigger_shift_action):
-            # Move the player
+            """
+            Moves the player.
+
+            ...
+
+            Attributes:
+            -----------
+            velocity : Vector
+                Current player movement speed.
+                
+            acceleration : Vector
+                Current change in player velocity.
+
+            position : Vector
+                Current x and y location of player.
+            """
 
             # Set the acceleration vector
             self.acceleration = Vector(0, self.VERTICAL_ACCELERATION)
 
-            # If the user is pressing a key, set the x component of the acceleration to be non-zero
+            # If the user is pressing the left arrow key, set the x component of
+            # the acceleration to be the value of the horizontal acceleration
+            # constant variable inversed. Also animate the player to move left.
             if keyboard["left"]:
                 self.acceleration.x = -1 * self.HORIZONTAL_ACCELERATION
                 self.animate(self.move_left_sprites, 0.5)
+
+            # If the user is pressing the right arrow key, set the x component
+            # of the acceleration to be the value of the horizontal acceleration
+            # constant variable. Also animate the player to move right.
             elif keyboard["right"]:
                 self.acceleration.x = self.HORIZONTAL_ACCELERATION
                 self.animate(self.move_right_sprites, 0.5)
+
+            # If the user is not pressing either the left or right arrow keys,
+            # animate the player in their idle state facing either left or right
+            # based on the player's x velocity.
             else:
                 if self.velocity.x > 0:
                     self.animate(self.idle_right_sprites, 0.5)
                 else:
                     self.animate(self.idle_left_sprites, 0.5)
             
+            # If the user is pressing the spacebar and is allowed to trigger the
+            # space action, this triggers the jump method.
             if keyboard["space"] and can_trigger_space_action:
                 self.jump()
 
+            # If the user is pressing the shift key and is allowed to trigger
+            # the shift action, this triggers the fire method.
             if keyboard["shift"] and can_trigger_shift_action:
                 self.fire()
 
-            # Calculate new kinematics values
+            # Calculate new kinematics values based on displacement formulas.
             self.acceleration.x -= self.velocity.x * self.HORIZONTAL_FRICTION
             self.velocity += self.acceleration
-            self.position += self.velocity + 0.5 * self.acceleration
+            self.position += self.velocity + (0.5 * self.acceleration)
 
-            # Update position based on kinematic calculations and add wrap-around movement
+            # If the player's x position is off the screen to the left,
+            # wrap-around movement to the right.
             if self.position.x < 0:
                 self.position.x = max_width
+
+            # If the player's x position is off the screen to the right,
+            # wrap-around movement to the left.
             elif self.position.x > max_width:
                 self.position.x = 0
 
         def check_collisions(self, max_width, max_height):
-            #Check for collisions with platforms and portals
+            """
+            Check for collisions between the player and platforms and portals.
+            """
 
-            # Collision check between player and platforms when falling
+            # Collision check between player and platforms when falling. If
+            # player has collided, set y position to the position of the
+            # platform's y position minus the player's height plus a small
+            # buffer. Then reset the y velocity.
             if self.velocity.y > 0:
                 for platform in self.platform_tiles:
                     if platform.is_colliding(self):
                         self.position.y = platform.position.y - self.height + 5
                         self.velocity.y = 0
 
-            # Collision check between player and platform if jumping up
+            # Collision check between player and platform when jumping up. If
+            # player has collided, reset the y velocity. Then while the player
+            # is still colliding with the platform, increment the y position of
+            # the player by one.
             if self.velocity.y < 0:
                 for platform in self.platform_tiles:
                     if platform.is_colliding(self):
@@ -321,7 +479,11 @@
                         while platform.is_colliding(self):
                             self.position.y += 1
 
-            # Collision check for portals
+            # Collision check between player and portals. If player has
+            # collided, use renpy.sound.play to play a portal sound effect. Then
+            # teleport the player to the top-left, top-right, bottom-left, or
+            # bottom-right depending on the current position of the player on
+            # the screen.
             for portal in self.portal_group:
                 if portal.is_colliding(self):
                     renpy.sound.play("audio/zk_portal_sound.wav")
@@ -338,15 +500,23 @@
                         self.position.y = max_height - 150 - self.height
 
         def check_animations(self):
-            # Check to see if the jump/fire animations should run
+            """
+            Check to see if the jump or fire animations should run.
+            """
 
-            # Animate the player jump
+            # If the player jump animation should be triggered, check the
+            # x velocity of the player to determine whether to render the right-
+            # or left-facing version of the jumping sprites.
+            
             if self.animate_jump:
                 if self.velocity.x > 0:
                     self.animate(self.jump_right_sprites, 0.1)
                 else:
                     self.animate(self.jump_left_sprites, 0.1)
-            # Animate the player attack
+
+            # If the player fire animation should be triggered, check the
+            # x velocity of the player to determine whether to render the right-
+            # or left-facing version of the attacking sprites.
             if self.animate_fire:
                 if self.velocity.x > 0:
                     self.animate(self.attack_right_sprites, 0.25)
@@ -354,9 +524,14 @@
                     self.animate(self.attack_left_sprites, 0.25)
 
         def jump(self):
-            # Jump upwards if on a platform
+            """
+            Player jump upwards if on a platform.
+            """
 
-            # Only jump if on a platform
+            # Collision check between player and platforms. If player has
+            # collided, use renpy.sound.play to play a jumping sound effect.
+            # Then set y velocity to the inverse of the vertical jump speed
+            # constant variable. Finally, set the animate_jump bool to True.
             for platform in self.platform_tiles:
                 if platform.is_colliding(self):
                     renpy.sound.play("audio/zk_jump_sound.wav")
@@ -364,131 +539,269 @@
                     self.animate_jump = True
 
         def fire(self):
-            # Fire a beam from a sword
+            """
+            Player fires a beam from their sword.
+            """
+
+            # Use renpy.sound.play to play a slashing sound effect. Then create
+            # a Beam object originating from the player, adding it to the beam
+            # group for the purposes of later removal. Finally, set the
+            # animate_fire bool to True.
             renpy.sound.play("audio/zk_slash_sound.wav")
             Beam(self.position.x + self.width / 2, self.position.y + self.height / 2, self.beam_group, self)
             self.animate_fire = True
 
         def reset(self):
-            # Reset the player's position
+            """
+            Reset the player's velocity and position.
+            """
 
             self.velocity = Vector(0, 0)
             self.position = Vector(self.starting_x, self.starting_y)
 
         def animate(self, sprite_list, speed):
-            #Animate the player's actions
+            """
+            Animate the player's actions.
 
-            if self.current_sprite < len(sprite_list) - 1:
-                self.current_sprite += speed
+            Arguments:
+
+            sprite_list (Displayable[]): List of sprites to be rendered.
+
+            speed (float): Speed at which the frames of the sprites should be
+            animated.
+            ...
+
+            Attributes:
+            -----------
+            image : Image
+                Current frame to be rendered, determined by referencing the
+                sprite list using the current_sprite_index.
+            """
+
+            # If the current_sprite_index is less than the total length of the
+            # current list of sprite frames minus one (because the index starts
+            # at zero), increment the current_sprite_index by the speed of the
+            # animation. Else, reset the current_sprite_index to zero.
+            if self.current_sprite_index < len(sprite_list) - 1:
+                self.current_sprite_index += speed
             else:
-                self.current_sprite = 0
+                self.current_sprite_index = 0
 
-                # End the jump animation
+                # Once the current_sprite_index has been reset, if the jump
+                # animation boolean has been triggered, make it False.
                 if self.animate_jump:
                     self.animate_jump = False
-                # End the attack animation
+
+                # Once the current_sprite_index has been reset, if the fire
+                # animation boolean has been triggered, make it False.
                 if self.animate_fire:
                     self.animate_fire = False
 
-            self.image = sprite_list[int(self.current_sprite)]
+            self.image = sprite_list[int(self.current_sprite_index)]
 
 
     class Beam(ZKSprite):
+        """
+        A slash-type beam attack summoned by the player's fire action.
+        """
+
+        # Constant variables
+        VELOCITY = 20  # Horizontal speed of Beams.
+        RANGE = 500  # Horizontal area where Beams are allowed to exist.
+
         def __init__(self, x, y, beam_group, player):
+            """
+            Arguments:
+            x (int): X-axis coordinate of the top-left of this Beam.
+
+            y (int): Y-axis coordinate of the top-left of this Beam.
+
+            beam_group (Beam[]): List of Beams into which "slash" sprites will
+            be inserted.
+
+            player (ZKPlayer): The player to which the Beam is attached and from
+            whom the Beam is fired.
+
+            """
             ZKSprite.__init__(self, 60, 60, x, y)
 
-            # Set constant variables
-            self.VELOCITY = 20
-            self.RANGE = 500
-
-            self.starting_x = x
-
-            self.beam_group = beam_group
-
-            # Load image
+            # If player's x velocity is greater than zero, e.g. the player is
+            # facing the right, render the right-facing Beam sprite. Else,
+            # render the left-facing sprite and inverse the Beam velocity.
             if player.velocity.x > 0:
                 self.image = Image("images/player/slash.png")
             else:
                 self.image = Transform(Image("images/player/slash.png"), xzoom=-1.0)
                 self.VELOCITY = -1 * self.VELOCITY
 
+            # Store starting x position of the Beam. 
+            self.starting_x = x
+
+            # Attach sprite group.
+            self.beam_group = beam_group
+
+            # Add Beam to beam_group.
             beam_group.append(self)
 
         def update(self):
-            # Update the beam
+            """
+            Updates the Beam by incrementing the x position by the velocity
+            constant variable. Also removes the Beam from the beam_group if the
+            x position of the Beam minus its starting x position is greater
+            than the range constant variable.
+            """
+
+            # Move the Beam.
             self.position.x += self.VELOCITY
 
-            # If the beam has passed the range, kill it
+            # If the beam has passed the range, kill it.
             if abs(self.position.x - self.starting_x) > self.RANGE:
                 self.beam_group.remove(self)
 
 
     class Zombie(ZKAnimated):
+        """
+        It's a zombie! This is the enemy of Zombie Knight.
+        """
+
+        # Constant variables
+        VERTICAL_ACCELERATION = 3  # Amount of gravity applied to the Zombies.
+        RISE_TIME = 2 # Seconds it takes for the Zombies to reanimate.
+
         def __init__(self, x, y, platform_tiles, portal_group, min_speed, max_speed):
+            """
+            Arguments:
+
+            x (int): X-axis coordinate of the top-left of this Zombie.
+
+            y (int): Y-axis coordinate of the top-left of this Zombie.
+
+            platform_tiles (Tile[]): List of platform Tiles used for collision
+            detection.
+
+            portal_group (Portal[]): List of Portals used for collision
+            detection.
+
+            min_speed (int): The minimum speed at which the Zombies can move.
+
+            max_speed (int): The maximum speed at which the Zombies can move.
+
+            ...
+
+            Attributes:
+            -----------
+            gender : int
+                A random integer, between 0 and 1, used to determine whether the
+                Zombie sprite rendered is a boy or a girl.
+            
+            direction : int
+                A random choice, either 1 or -1, used to determine whether the
+                Zombie moves left or right.
+            
+            animate_death : bool
+                Whether Zombie death is being animated.
+
+            animate_rise : bool
+                Whether Zombie reanimation is being animated.
+
+            velocity : Vector
+                Current Zombie movement speed, determined by direction times a
+                random integer, between min_speed and max_speed.
+                
+            acceleration : Vector
+                Current change in Zombie velocity.
+
+            is_dead : bool
+                Whether the Zombie is considered dead, the state in which it has
+                been hit by a Beam but has not been jumped on to make it
+                disappear.
+            
+            frame_count : int
+                The number of frames that has passed 
+
+            round_time : int
+
+            """
             ZKAnimated.__init__(self, 120, 120, x, y)
 
-            # Set constant variables
-            self.VERTICAL_ACCELERATION = 3  # Gravity
-            self.RISE_TIME = 2
-
+            # Choose gender.
             gender = random.randint(0, 1)
+
             # Boy Zombie
             if gender == 0:
                 self.walk_right_sprites, self.walk_left_sprites = self.generate_mirrored_animation("images/zombie/boy/walk/Walk ({}).png", 1, 10)
                 self.die_right_sprites, self.die_left_sprites = self.generate_mirrored_animation("images/zombie/boy/dead/Dead ({}).png", 1, 10)
                 self.rise_right_sprites, self.rise_left_sprites = self.generate_mirrored_animation("images/zombie/boy/dead/Dead ({}).png", 10, 1, -1)
 
+            # Girl Zombie
             else:
                 self.walk_right_sprites, self.walk_left_sprites = self.generate_mirrored_animation("images/zombie/girl/walk/Walk ({}).png", 1, 10)
                 self.die_right_sprites, self.die_left_sprites = self.generate_mirrored_animation("images/zombie/girl/dead/Dead ({}).png", 1, 10)
                 self.rise_right_sprites, self.rise_left_sprites = self.generate_mirrored_animation("images/zombie/girl/dead/Dead ({}).png", 10, 1, -1)
 
-            # Load image
+            # Choose direction.
             self.direction = random.choice([-1, 1])
 
-            self.current_sprite = 0
-            if self.direction == -1:
-                self.image = self.walk_left_sprites[self.current_sprite]
-            else:
-                self.image = self.walk_right_sprites[self.current_sprite]
+            # Reset current_sprite_index.
+            self.current_sprite_index = 0
 
-            # Attach sprite groups
+            # If direction is equal to -1, the zombie is rendered walking left.
+            # Else, the zombie is rendered walking right.
+            if self.direction == -1:
+                self.image = self.walk_left_sprites[self.current_sprite_index]
+            else:
+                self.image = self.walk_right_sprites[self.current_sprite_index]
+
+            # Attach sprite groups.
             self.platform_tiles = platform_tiles
             self.portal_group = portal_group
 
-            # Animation booleans
+            # Set animation booleans.
             self.animate_death = False
             self.animate_rise = False
 
-            # Kinematics vectors
+            # Initialize kinematics vectors.
             self.velocity = Vector(self.direction * random.randint(min_speed, max_speed), 0)
             self.acceleration = Vector(0, self.VERTICAL_ACCELERATION)
 
-            # Initial zombie values
+            # Initialize zombie values.
             self.is_dead = False
-            self.round_time = 0
             self.frame_count = 0
+            self.round_time = 0
 
         def update(self, max_width, max_height):
-            #Update the zombie
+            """
+            Updates the zombie by calling the move, check_collisions, and
+            check_animations methods. Also determines whether the zombie is
+            considered to be in a dead state and when they should reanimate.
+            """
 
             self.move(max_width)
             self.check_collisions(max_width, max_height)
             self.check_animations()
 
-            # Determine when the zombie should rise from the dead
+            # Determine when the zombie should rise from the dead by checking
+            # the is_dead boolean flag and if it is set, incrementing
+            # frame_count by one every update loop until sixty frames have
+            # passed. This adds one to the round_time and when round_time equals
+            # the same as the zombie's rise_time constant variable, the
+            # animate_rise boolean flag is triggered and the
+            # current_sprite_index is reset so the animation occurs properly.
             if self.is_dead:
                 self.frame_count += 1
                 if self.frame_count % 60 == 0:
                     self.round_time += 1
                     if self.round_time == self.RISE_TIME:
                         self.animate_rise = True
-                        # When the zombie died, the image was kept as the last image
-                        # When it rises, we want to start at index 0 of our rise_sprite lists
-                        self.current_sprite = 0
+                        # When the zombie died, the image was kept as the last image.
+                        # When it rises, we want to start at index 0 of our rise_sprite lists.
+                        self.current_sprite_index = 0
 
         def move(self, max_width):
-            # Move the zombie
+            """
+            If the zombie is not dead, move it. If direction is -1, animate the
+            zombie walking left. Else, animate the zombie walking right.
+            """
 
             if not self.is_dead:
                 if self.direction == -1:
@@ -496,28 +809,41 @@
                 else:
                     self.animate(self.walk_right_sprites, 0.5)
 
-                # We don't need to update the acceleration vector because it never changes here
-
-                # Calculate the kinematics values
+                # Calculate new kinematics values based on displacement
+                # formulas. We don't need to update the acceleration vector
+                # because it never changes here.
                 self.velocity += self.acceleration
-                self.position += self.velocity + 0.5 * self.acceleration
+                self.position += self.velocity + (0.5 * self.acceleration)
 
-                # Update position based on kinematic calculations and add wrap-around movement
+                # If the zombie's x position is off the screen to the left,
+                # wrap-around movement to the right.
                 if self.position.x < 0:
                     self.position.x = max_width
+
+                # If the zombie's x position is off the screen to the right,
+                # wrap-around movement to the left.
                 elif self.position.x > max_width:
                     self.position.x = 0
 
         def check_collisions(self, max_width, max_height):
-            #Check for collisions with platforms and portals
+            """
+            Check for collisions between the zombie and platforms and portals.
+            """
 
-            # Collision check between zombie and platforms when falling
+            # Collision check between zombie and platforms when falling. If
+            # zombie has collided, set y position to the position of the
+            # platform's y position minus the zombie's height plus a small
+            # buffer. Then reset the y velocity.
             for platform in self.platform_tiles:
                 if platform.is_colliding(self):
                     self.position.y = platform.position.y - self.height + 5
                     self.velocity.y = 0
 
-            # Collision check for portals
+            # Collision check between zombie and portals. If zombie has
+            # collided, use renpy.sound.play to play a portal sound effect. Then
+            # teleport the zombie to the top-left, top-right, bottom-left, or
+            # bottom-right depending on the current position of the zombie on
+            # the screen.
             for portal in self.portal_group:
                 if portal.is_colliding(self):
                     renpy.sound.play("audio/zk_portal_sound.wav")
@@ -534,16 +860,22 @@
                         self.position.y = max_height - 150 - self.height
 
         def check_animations(self):
-            # Check to see if the death/rise animations should run
+            """
+            Check to see if the death or rise animations should run.
+            """
 
-            # Animate the zombie death
+            # If the zombie death animation should be triggered, check the
+            # direction of the zombie to determine whether to render the right-
+            # or left-facing version of the dying sprites.
             if self.animate_death:
                 if self.direction == 1:
                     self.animate(self.die_right_sprites, 0.095)
                 else:
                     self.animate(self.die_left_sprites,0.095)
 
-            # Animate the zombie rise
+            # If the zombie rise animation should be triggered, check the
+            # direction of the zombie to determine whether to render the right-
+            # or left-facing version of the reanimating sprites.
             if self.animate_rise:
                 if self.direction == 1:
                     self.animate(self.rise_right_sprites, 0.095)
@@ -551,113 +883,223 @@
                     self.animate(self.rise_left_sprites, 0.095)
 
         def animate(self, sprite_list, speed):
-            #Animate the zombies's actions
+            """
+            Animate the zombie's actions.
 
-            if self.current_sprite < len(sprite_list) - 1:
-                self.current_sprite += speed
+            Arguments:
+
+            sprite_list (Displayable[]): List of sprites to be rendered.
+
+            speed (float): Speed at which the frames of the sprites should be
+            animated.
+            ...
+
+            Attributes:
+            -----------
+            image : Image
+                Current frame to be rendered, determined by referencing the
+                sprite list using the current_sprite_index.
+            """
+
+            # If the current_sprite_index is less than the total length of the
+            # current list of sprite frames minus one (because the index starts
+            # at zero), increment the current_sprite_index by the speed of the
+            # animation. Else, reset the current_sprite_index to zero.
+            if self.current_sprite_index < len(sprite_list) - 1:
+                self.current_sprite_index += speed
             else:
-                self.current_sprite = 0
-                # End the death animation
+                self.current_sprite_index = 0
+
+                # Once the current_sprite_index has been reset, if the death
+                # animation boolean has been triggered, make it False and set
+                # the current_sprite_index to the last frame of the death
+                # animation.
                 if self.animate_death:
-                    self.current_sprite = len(sprite_list) - 1
+                    self.current_sprite_index = len(sprite_list) - 1
                     self.animate_death = False
-                # End the rise animation
+
+                # Once the current_sprite_index has been reset, if the
+                # reanimation boolean has been triggered, make it False, as well
+                # as setting the is_dead boolean to False and resetting the
+                # frame_count and round_time to zero.
                 if self.animate_rise:
                     self.animate_rise = False
                     self.is_dead = False
                     self.frame_count = 0
                     self.round_time = 0
 
-            self.image = sprite_list[int(self.current_sprite)]
+            self.image = sprite_list[int(self.current_sprite_index)]
 
 
     class RubyMaker(ZKAnimated):
-        def __init__(self, x, y, main_group):
+        """
+        The transparent RubyMaker from which all Rubies are generated.
+        """
+
+        def __init__(self, x, y, main_tile_group):
+            """
+            Arguments:
+
+            x (int): X-axis coordinate of the top-left of this RubyMaker.
+
+            y (int): Y-axis coordinate of the top-left of this RubyMaker.
+
+            main_tile_group (list): List of all the Tiles and RubyMaker to be
+            rendered.
+            
+            ...
+
+            Attributes:
+            -----------
+            image : Image
+                Current frame to be rendered, determined by referencing the
+                sprite list using the current_sprite_index.
+            """
+
             ZKAnimated.__init__(self, 60, 60, x, y)
 
-            # Animation frames
+            # Generate sprite list.
             self.ruby_sprites = self.generate_animation("images/ruby_maker/tile00{}.png", 0, 6)
 
-            # Load image
-            self.current_sprite = 0
-            self.image = self.ruby_sprites[self.current_sprite]
+            # Reset current_sprite_index.
+            self.current_sprite_index = 0
 
-            # Add to the main group for drawing purposes
-            main_group.append(self)
+            self.image = self.ruby_sprites[self.current_sprite_index]
+
+            # Add RubyMaker to main tile group.
+            main_tile_group.append(self)
 
         def update(self):
-            #Update the Ruby Maker
+            """
+            Updates the RubyMaker by calling the animate method.
+            """
 
             self.animate(self.ruby_sprites, 0.25)
 
         def animate(self, sprite_list, speed):
-            # Animate the Ruby Maker
+            """
+            Animate the RubyMaker.
 
-            if self.current_sprite < len(sprite_list) - 1:
-                self.current_sprite += speed
+            Arguments:
+
+            sprite_list (Displayable[]): List of sprites to be rendered.
+
+            speed (float): Speed at which the frames of the sprites should be
+            animated.
+            ...
+
+            Attributes:
+            -----------
+            image : Image
+                Current frame to be rendered, determined by referencing the
+                sprite list using the current_sprite_index.
+            """
+
+            # If the current_sprite_index is less than the total length of the
+            # current list of sprite frames minus one (because the index starts
+            # at zero), increment the current_sprite_index by the speed of the
+            # animation. Else, reset the current_sprite_index to zero.
+            if self.current_sprite_index < len(sprite_list) - 1:
+                self.current_sprite_index += speed
             else:
-                self.current_sprite = 0
+                self.current_sprite_index = 0
 
-            self.image = sprite_list[int(self.current_sprite)]
+            self.image = sprite_list[int(self.current_sprite_index)]
 
 
     class Ruby(ZKAnimated):
+        """
+        The method of gaining points and health in the game.
+        """
+
+        # Constant variables
+        VERTICAL_ACCELERATION = 3  # Amount of gravity applied to the Rubies.
+        HORIZONTAL_VELOCITY = 5  # Horizontal speed of Rubies.
+
         def __init__(self, max_width, platform_tiles, portal_group):
+            """
+            Arguments:
+            max_width (int): Viewport width used for detecting when the Ruby has
+            reached the right side of the screen.
+
+            platform_tiles (Tile[]): List of platform Tiles used for collision
+            detection.
+
+            portal_group (Portal[]): List of Portals used for collision
+            detection.
+            """
             ZKAnimated.__init__(self, 60, 60, max_width // 2, 100)
 
-            # Set constant variables
-            self.VERTICAL_ACCELERATION = 3  # Gravity
-            self.HORIZONTAL_VELOCITY = 5
-
-            # Animation frames
+            # Generate sprite list.
             self.ruby_sprites = self.generate_animation("images/ruby/tile00{}.png", 0, 6)
 
-            # Load image
-            self.current_sprite = 0
-            self.image = self.ruby_sprites[self.current_sprite]
+            # Reset current_sprite_index.
+            self.current_sprite_index = 0
 
-            # Attach sprite groups
+            self.image = self.ruby_sprites[self.current_sprite_index]
+
+            # Attach sprite groups.
             self.platform_tiles = platform_tiles
             self.portal_group = portal_group
 
-            # Kinematic vectors
+            # Initialize kinematics vectors.
             self.velocity = Vector(random.choice([-1 * self.HORIZONTAL_VELOCITY, self.HORIZONTAL_VELOCITY]), 0)
             self.acceleration = Vector(0, self.VERTICAL_ACCELERATION)
 
         def update(self, max_width, max_height):
-            # Update the ruby
+            """
+            Updates the Ruby by calling the animate, move, and check_collisions
+            methods.
+            """
 
             self.animate(self.ruby_sprites, 0.25)
             self.move(max_width)
             self.check_collisions(max_width, max_height)
 
         def move(self, max_width):
-            # Move the ruby
+            """
+            Moves the ruby.
+            """
 
-            # We don't need to update the acceleration vector because it never changes here
-
-            # Calculate the kinematics values
+            # Calculate new kinematics values based on displacement
+            # formulas. We don't need to update the acceleration vector
+            # because it never changes here.
             self.velocity += self.acceleration
-            self.position += self.velocity + 0.5 * self.acceleration
+            self.position += self.velocity + (0.5 * self.acceleration)
 
-            # Update position based on kinematic calculations and add wrap-around movement
+            # If the zombie's x position is off the screen to the left,
+            # wrap-around movement to the right. Decrement y position to deal
+            # with some positional wonkiness.
             if self.position.x < 0:
                 self.position.x = max_width
                 self.position.y -= 120
+
+            # If the zombie's x position is off the screen to the right,
+            # wrap-around movement to the left. Decrement y position to deal
+            # with some positional wonkiness.
             elif self.position.x > max_width:
                 self.position.x = 0
                 self.position.y -= 120
 
         def check_collisions(self, max_width, max_height):
-            # Check for collisions with platforms and portals
+            """
+            Check for collisions between the rubies and platforms and portals.
+            """
 
-            # Collision check between ruby and platforms when falling
+            # Collision check between rubies and platforms when falling. If
+            # the ruby has collided, set y position to the position of the
+            # platform's y position minus the rubies's height plus a small
+            # buffer. Then reset the y velocity.
             for platform in self.platform_tiles:
                 if platform.is_colliding(self):
                     self.position.y = platform.position.y - self.height + 5
                     self.velocity.y = 0
 
-            # Collision check for portals
+            # Collision check between rubies and portals. If the ruby has
+            # collided, use renpy.sound.play to play a portal sound effect. Then
+            # teleport the rubies to the top-left, top-right, bottom-left, or
+            # bottom-right depending on the current position of the rubies on
+            # the screen.
             for portal in self.portal_group:
                 if portal.is_colliding(self):
                     renpy.sound.play("audio/zk_portal_sound.wav")
@@ -674,18 +1116,42 @@
                         self.position.y = max_height - 150 - self.height
 
         def animate(self, sprite_list, speed):
-            # Animate the ruby
-            if self.current_sprite < len(sprite_list) - 1:
-                self.current_sprite += speed
+            """
+            Animate the Ruby.
+
+            Arguments:
+
+            sprite_list (Displayable[]): List of sprites to be rendered.
+
+            speed (float): Speed at which the frames of the sprites should be
+            animated.
+            ...
+
+            Attributes:
+            -----------
+            image : Image
+                Current frame to be rendered, determined by referencing the
+                sprite list using the current_sprite_index.
+            """
+
+            # If the current_sprite_index is less than the total length of the
+            # current list of sprite frames minus one (because the index starts
+            # at zero), increment the current_sprite_index by the speed of the
+            # animation. Else, reset the current_sprite_index to zero.
+            if self.current_sprite_index < len(sprite_list) - 1:
+                self.current_sprite_index += speed
             else:
-                self.current_sprite = 0
+                self.current_sprite_index = 0
 
-            self.image = sprite_list[int(self.current_sprite)]
+            self.image = sprite_list[int(self.current_sprite_index)]
 
 
-    class Portal(ZKSprite):
+    class Portal(ZKAnimated):
+        """
+        
+        """
         def __init__(self, x, y, color, portal_group):
-            ZKSprite.__init__(self, 120, 120, x, y)
+            ZKAnimated.__init__(self, 120, 120, x, y)
 
             # Animation frames
             self.portal_sprites = []
@@ -741,8 +1207,8 @@
                 self.portal_sprites.append(Image("images/portals/purple/tile021.png"))
 
             # Load an image
-            self.current_sprite = random.randint(0, len(self.portal_sprites) - 1)
-            self.image = self.portal_sprites[self.current_sprite]
+            self.current_sprite_index = random.randint(0, len(self.portal_sprites) - 1)
+            self.image = self.portal_sprites[self.current_sprite_index]
 
             # Add to the portal group
             portal_group.append(self)
@@ -754,17 +1220,17 @@
 
         def animate(self, sprite_list, speed):
             # Animate the portal
-            if self.current_sprite < len(sprite_list) - 1:
-                self.current_sprite += speed
+            if self.current_sprite_index < len(sprite_list) - 1:
+                self.current_sprite_index += speed
             else:
-                self.current_sprite = 0
+                self.current_sprite_index = 0
 
-            self.image = sprite_list[int(self.current_sprite)]
+            self.image = sprite_list[int(self.current_sprite_index)]
 
 
     class ZombieKnightDisplayable(renpy.Displayable):
 
-        def __init__(self, player, zombie_group, platform_tiles, portal_group, beam_group, ruby_group, main_group):
+        def __init__(self, player, zombie_group, platform_tiles, portal_group, beam_group, ruby_group, main_tile_group):
 
             renpy.Displayable.__init__(self)
             # Initialize the game
@@ -789,7 +1255,7 @@
             self.portal_group = portal_group
             self.beam_group = beam_group
             self.ruby_group = ruby_group
-            self.main_group = main_group
+            self.main_tile_group = main_tile_group
 
             self.pause_background = Solid("#000000", xsize=self.WINDOW_WIDTH, ysize=self.WINDOW_HEIGHT)
             self.pbx = 0
@@ -888,7 +1354,7 @@
                     portal.render(r, st, at)
 
                 # Render the tiles
-                for tile in self.main_group:
+                for tile in self.main_tile_group:
                     tile.update()
                     tile.render(r, st, at)
 
