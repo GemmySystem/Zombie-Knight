@@ -411,12 +411,12 @@
 
             # If the user is pressing the spacebar and is allowed to trigger the
             # space action, this triggers the jump method.
-            if keyboard.space and can_trigger_space_action:
+            if keyboard.space > 0 and can_trigger_space_action:
                 self.jump()
 
             # If the user is pressing the shift key and is allowed to trigger
             # the shift action, this triggers the fire method.
-            if keyboard.shift and can_trigger_shift_action:
+            if keyboard.shift > 0 and can_trigger_shift_action:
                 self.fire()
 
             # Calculate new kinematics values based on displacement formulas.
@@ -1203,9 +1203,10 @@
             self.down = False
             self.left = False
             self.right = False
-            self.space = False
-            self.shift = False
+            self.space = 0
+            self.shift = 0
             self.enter = False
+            self.escape = False
 
 
     class ZombieKnightDisplayable(renpy.Displayable):
@@ -1271,9 +1272,25 @@
         sty : int|float
             Y-axis position of the subtitle.
 
+        keyboard : KeyboardInput
+            Helper class for keeping track of the keyboard inputs that are
+            currently being pressed/held.
         
+        can_trigger_space_action : bool
+            Whether the spacebar on-press action should fire. This is to prevent
+            repeatedly firing the on-press action multiple times.
+        
+        can_trigger_shift_action : bool
+            Whether the shift on-press action should fire. This is to prevent
+            repeatedly firing the on-press action multiple times.
 
+        is_paused : bool
+            Boolean value tracking whether or not the game is being treated as
+            "paused" and if behaviors associated with that, such as pausing the
+            music and not rendering the objects, occur.
         
+        lose : bool
+            Boolean value tracking whether the player has lost the game.
         """
 
         # Constant variables
@@ -1315,7 +1332,7 @@
             self.keyboard = KeyboardInput()
             self.can_trigger_space_action = True
             self.can_trigger_shift_action = True
-            self.is_paused = False
+            self.is_paused = True
 
             self.lose = False
 
@@ -1359,6 +1376,9 @@
 
             if not self.is_paused:
 
+                # Unpause the music, if paused
+                renpy.music.set_pause(False, channel="music")
+
                 # Render the player
                 self.player.update(self.keyboard, self.WINDOW_WIDTH, self.WINDOW_HEIGHT, self.can_trigger_space_action, self.can_trigger_shift_action)
                 self.player.render(r, st, at)
@@ -1400,8 +1420,8 @@
             else:
                 renpy.music.set_pause(True, channel="music")
                 pause_background()
-                main_text(self.mtx, self.mty)
-                sub_text(self.stx, self.sty)
+                main_text(self.mty)
+                sub_text(self.sty)
 
                 if self.keyboard.enter:
                     self.is_paused = False
@@ -1424,13 +1444,20 @@
                 elif ev.key == pygame.K_RIGHT:
                     self.keyboard.right = True
                 elif ev.key == pygame.K_SPACE:
-                    self.keyboard.space = True
-                    self.can_trigger_space_action = True
+                    self.keyboard.space += 1
+                    if self.keyboard.space == 1:
+                        self.can_trigger_space_action = True
                 elif ev.key == pygame.K_LSHIFT or ev.key == pygame.K_RSHIFT:
-                    self.keyboard.shift = True
-                    self.can_trigger_shift_action = True
+                    self.keyboard.shift += 1
+                    if self.keyboard.shift == 1:
+                        self.can_trigger_shift_action = True
                 elif ev.key == pygame.K_RETURN:
                     self.keyboard.enter = True
+                elif ev.key == pygame.K_ESCAPE:
+                    self.keyboard.escape = True
+                    self.is_paused = not self.is_paused
+                    self.main_text = "You paused the game!"
+                    self.sub_text = "Press Enter or Start to continue"
             elif ev.type == pygame.KEYUP:
                 if ev.key == pygame.K_UP:
                     self.keyboard.up = False
@@ -1441,23 +1468,27 @@
                 elif ev.key == pygame.K_RIGHT:
                     self.keyboard.right = False
                 elif ev.key == pygame.K_SPACE:
-                    self.keyboard.space = False
+                    self.keyboard.space = 0
                 elif ev.key == pygame.K_LSHIFT or ev.key == pygame.K_RSHIFT:
-                    self.keyboard.shift = False
+                    self.keyboard.shift = 0
                 elif ev.key == pygame.K_RETURN:
                     self.keyboard.enter = False
+                elif ev.key == pygame.K_ESCAPE:
+                    self.keyboard.escape = False
             else:
                 if renpy.map_event(ev, "pad_a_press"):
-                    self.keyboard.space = True
-                    self.can_trigger_space_action = True
+                    self.keyboard.space += 1
+                    if self.keyboard.space == 1:
+                        self.can_trigger_space_action = True
                 elif renpy.map_event(ev, "pad_a_release"):
-                    self.keyboard.space = False
+                    self.keyboard.space = 0
 
                 if renpy.map_event(ev, "pad_b_press"):
-                    self.keyboard.shift = True
-                    self.can_trigger_shift_action = True
+                    self.keyboard.shift += 1
+                    if self.keyboard.shift == 1:
+                        self.can_trigger_shift_action = True
                 elif renpy.map_event(ev, "pad_b_release"):
-                    self.keyboard.shift = False
+                    self.keyboard.shift = 0
 
                 if renpy.map_event(ev, "pad_start_press"):
                     self.keyboard.enter = True
@@ -1579,6 +1610,7 @@
             # Check to see if the player lost the game
 
             if self.player.health <= 0:
+                
                 self.lose = True
 
                 renpy.timeout(0)
