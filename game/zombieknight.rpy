@@ -73,9 +73,12 @@
             render (renpy.Render): Ren'Py render object onto which this sprite
             will be rendered.
 
-            st (float): Shown timebase in seconds.
+            st (float): Shown timebase in seconds. The shown timebase begins
+            when this sprite is first shown on the screen.
 
-            at (float): Animation timebase in seconds.
+            at (float): Animation timebase in seconds. The animation timebase
+            begins when a sprite with the same tag was shown, without being
+            hidden.
             """
             r = renpy.render(self.image, self.width, self.height, st, at)
             render.blit(r, (int(self.position.x), int(self.position.y)))
@@ -99,7 +102,7 @@
             )
 
 
-    class Tile(ZKSprite):
+    class ZKTile(ZKSprite):
         """
         A static, collidable ZKSprite.
         """
@@ -114,7 +117,7 @@
             image_int (int): An integer that defines the sprite used by this
             tile, e.g. 1: dirt and 2-5: platforms.
 
-            misc_tile_group (list): List of all the Tiles to be rendered.
+            misc_tiles (list): List of all the ZKTiles to be rendered.
             """
             ZKSprite.__init__(self, 30, 30, x, y)
 
@@ -276,14 +279,14 @@
         image : Image
             Current frame to be rendered.
 
-        platform_tiles : Tile[]
-            List of platform Tiles used for collision detection.
+        platform_tiles : ZKTile[]
+            List of platform ZKTiles used for collision detection.
 
         portal_group : Portal[]
             List of Portals used for collision detection.
 
-        beam_group : Beam[]
-            List of Beams into which "slash" sprites will be inserted.
+        beam_group : ZKBeam[]
+            List of ZKBeams into which "slash" sprites will be inserted.
 
         animate_jump : bool
             Whether jumping is being animated.
@@ -525,11 +528,11 @@
             """
 
             # Use renpy.sound.play to play a slashing sound effect. Then create
-            # a Beam object originating from the player, adding it to the beam
+            # a ZKBeam object originating from the player, adding it to the beam
             # group for the purposes of later removal. Finally, set the
             # animate_fire bool to True.
             renpy.sound.play("audio/zk_slash_sound.wav")
-            Beam(self.position.x + self.width / 2, self.position.y + self.height / 2, self.beam_group, self)
+            ZKBeam(self.position.x + self.width / 2, self.position.y + self.height / 2, self.beam_group, self)
             self.animate_fire = True
 
         def reset(self):
@@ -581,59 +584,59 @@
             self.image = sprite_list[int(self.current_sprite_index)]
 
 
-    class Beam(ZKSprite):
+    class ZKBeam(ZKSprite):
         """
         A slash-type beam attack summoned by the player's fire action.
         """
 
         # Constant variables
-        VELOCITY = 20  # Horizontal speed of Beams.
-        RANGE = 500  # Horizontal area where Beams are allowed to exist.
+        VELOCITY = 20  # Horizontal speed of ZKBeams.
+        RANGE = 500  # Horizontal area where ZKBeams are allowed to exist.
 
         def __init__(self, x, y, beam_group, player):
             """
             Arguments:
 
-            x (int): X-axis coordinate of the top-left of this Beam.
+            x (int): X-axis coordinate of the top-left of this ZKBeam.
 
-            y (int): Y-axis coordinate of the top-left of this Beam.
+            y (int): Y-axis coordinate of the top-left of this ZKBeam.
 
-            beam_group (Beam[]): List of Beams into which "slash" sprites will
+            beam_group (ZKBeam[]): List of ZKBeams into which "slash" sprites will
             be inserted.
 
-            player (ZKPlayer): The player to which the Beam is attached and from
-            whom the Beam is fired.
+            player (ZKPlayer): The player to which the ZKBeam is attached and from
+            whom the ZKBeam is fired.
 
             """
             ZKSprite.__init__(self, 60, 60, x, y)
 
             # If player's x velocity is greater than zero, e.g. the player is
-            # facing the right, render the right-facing Beam sprite. Else,
-            # render the left-facing sprite and inverse the Beam velocity.
+            # facing the right, render the right-facing ZKBeam sprite. Else,
+            # render the left-facing sprite and inverse the ZKBeam velocity.
             if player.velocity.x > 0:
                 self.image = Image("images/player/slash.png")
             else:
                 self.image = Transform(Image("images/player/slash.png"), xzoom=-1.0)
                 self.VELOCITY = -1 * self.VELOCITY
 
-            # Store starting x position of the Beam.
+            # Store starting x position of the ZKBeam.
             self.starting_x = x
 
             # Attach sprite group.
             self.beam_group = beam_group
 
-            # Add Beam to beam_group.
+            # Add ZKBeam to beam_group.
             beam_group.append(self)
 
         def update(self):
             """
-            Updates the Beam by incrementing the x position by the velocity
-            constant variable. Also removes the Beam from the beam_group if the
-            x position of the Beam minus its starting x position is greater
+            Updates the ZKBeam by incrementing the x position by the velocity
+            constant variable. Also removes the ZKBeam from the beam_group if the
+            x position of the ZKBeam minus its starting x position is greater
             than the range constant variable.
             """
 
-            # Move the Beam.
+            # Move the ZKBeam.
             self.position.x += self.VELOCITY
 
             # If the beam has passed the range, kill it.
@@ -641,32 +644,32 @@
                 self.beam_group.remove(self)
 
 
-    class Zombie(ZKAnimated):
+    class ZKZombie(ZKAnimated):
         """
         It's a zombie! This is the enemy of Zombie Knight.
         """
 
         # Constant variables
-        VERTICAL_ACCELERATION = 3  # Amount of gravity applied to the Zombies.
-        RISE_TIME = 2 # Seconds it takes for the Zombies to reanimate.
+        VERTICAL_ACCELERATION = 3  # Amount of gravity applied to the ZKZombies.
+        RISE_TIME = 2 # Seconds it takes for the ZKZombies to reanimate.
 
         def __init__(self, x, y, platform_tiles, portal_group, min_speed, max_speed):
             """
             Arguments:
 
-            x (int): X-axis coordinate of the top-left of this Zombie.
+            x (int): X-axis coordinate of the top-left of this ZKZombie.
 
-            y (int): Y-axis coordinate of the top-left of this Zombie.
+            y (int): Y-axis coordinate of the top-left of this ZKZombie.
 
-            platform_tiles (Tile[]): List of platform Tiles used for collision
+            platform_tiles (ZKTile[]): List of platform ZKTiles used for collision
             detection.
 
             portal_group (Portal[]): List of Portals used for collision
             detection.
 
-            min_speed (int): The minimum speed at which the Zombies can move.
+            min_speed (int): The minimum speed at which the ZKZombies can move.
 
-            max_speed (int): The maximum speed at which the Zombies can move.
+            max_speed (int): The maximum speed at which the ZKZombies can move.
 
             ...
 
@@ -674,33 +677,33 @@
             -----------
             gender : int
                 A random integer, between 0 and 1, used to determine whether the
-                Zombie sprite rendered is a boy or a girl. The  gender is purely
-                decorative.
+                ZKZombie sprite rendered is a boy or a girl. The  gender is
+                purely decorative.
 
             direction : int
                 A random choice, either 1 or -1, used to determine whether the
-                Zombie moves left or right.
+                ZKZombie moves left or right.
 
             animate_death : bool
-                Whether Zombie death is being animated.
+                Whether ZKZombie death is being animated.
 
             animate_rise : bool
-                Whether Zombie reanimation is being animated.
+                Whether ZKZombie reanimation is being animated.
 
             velocity : Vector
-                Current Zombie movement speed, determined by direction times a
+                Current ZKZombie movement speed, determined by direction times a
                 random integer, between `min_speed` and `max_speed`.
 
             acceleration : Vector
-                Current change in Zombie velocity.
+                Current change in ZKZombie velocity.
 
             is_dead : bool
-                Whether the Zombie is considered dead, the state in which it has
-                been hit by a Beam but has not been jumped on to make it
+                Whether the ZKZombie is considered dead, the state in which it
+                has been hit by a ZKBeam but has not been jumped on to make it
                 disappear.
 
             frames_dead : int
-                The number of frames that have passed since this Zombie died.
+                The number of frames that have passed since this ZKZombie died.
                 This value is used to keep track of when to increment
                 `seconds_dead`.
 
@@ -1010,7 +1013,7 @@
             max_width (int): Viewport width used for detecting when the Ruby has
             reached the right side of the screen.
 
-            platform_tiles (Tile[]): List of platform Tiles used for collision
+            platform_tiles (ZKTile[]): List of platform ZKTiles used for collision
             detection.
 
             portal_group (Portal[]): List of Portals used for collision
@@ -1209,7 +1212,7 @@
             self.escape = False
 
 
-    class ZombieKnightDisplayable(renpy.Displayable):
+    class ZKDisplayable(renpy.Displayable):
         """
         The combined displayable and game class. This is the meat of
         Creator-Defined Displayables and what works together with all the other
@@ -1241,19 +1244,20 @@
         zombie_group : Zombie[]
             List of zombie instances currently in the game.
         
-        platform_tiles : Tile[]
+        platform_tiles : ZKTile[]
             List of platform tiles currently in the game.
         
         portal_group : Portal[]
             List of portals currently on the map.
         
-        beam_group : Beam[]
-            List of Beam instances (slash animations) currently being rendered.
+        beam_group : ZKBeam[]
+            List of ZKBeam instances (slash animations) currently being
+            rendered.
         
         ruby_group : Ruby[]
             List of Ruby items currently spawned on the map.
         
-        misc_tile_group : ZKSprite[]
+        misc_tiles : ZKSprite[]
             List of all platform tiles, decorational tiles (dirt), and the ruby
             spawner.
         
@@ -1296,13 +1300,13 @@
         # Constant variables
         STARTING_ROUND_TIME = 30  # Seconds until the round ends
         STARTING_ZOMBIE_CREATION_INTERVAL = 5  # Seconds between zombie spawns
+        ZOMBIE_POINT_VALUE = 25 # Points that killing a zombie is worth
         RUBY_POINT_VALUE = 100  # Points that a Ruby is worth
         RUBY_HEALTH_VALUE = 10 # Health points that a Ruby restores
         WINDOW_WIDTH = 1920  # Viewport width
         WINDOW_HEIGHT = 1080  # Viewport width
 
-        def __init__(self, player, zombie_group, platform_tiles, portal_group, beam_group, ruby_group, misc_tile_group):
-
+        def __init__(self, player, zombie_group, platform_tiles, portal_group, beam_group, ruby_group, misc_tiles):
             renpy.Displayable.__init__(self)
 
             # Set game values
@@ -1319,7 +1323,7 @@
             self.portal_group = portal_group
             self.beam_group = beam_group
             self.ruby_group = ruby_group
-            self.misc_tile_group = misc_tile_group
+            self.misc_tiles = misc_tiles
 
             self.pause_background = Solid("#000000", xsize=self.WINDOW_WIDTH, ysize=self.WINDOW_HEIGHT)
 
@@ -1339,219 +1343,408 @@
             return
 
         def render(self, width, height, st, at):
-            # Draws the screen
+            """
+            Renders the Displayables.
 
-            # The Render object we'll be drawing into
+            Arguments:
+
+            width (int): Width of the Displayable.
+
+            height (int): Height of the Displayable.
+
+            st (float): Shown timebase in seconds. The shown timebase begins
+            when this displayable is first shown on the screen.
+
+            at (float): Animation timebase in seconds. The animation timebase
+            begins when an image with the same tag was shown, without being
+            hidden.
+            """
+
+            # The renpy.Render object we'll be drawing into.
             r = renpy.Render(width, height)
 
-            # This draws the pause background
             def pause_background():
+                """
+                Function for a rendering a pause background for the pause
+                screen, which is also used as a title card.
+                """
 
-                # Render the pause background
+                # This causes a pause background to be rendered and a
+                # renpy.Render object to be returned.
                 pause_background = renpy.render(self.pause_background, width, height, st, at)
 
-                # renpy.render returns a Render object, which we can
-                # blit to the Render we're making
+                # Blit the pause background to the renpy.Render object we're
+                # creating.
                 r.blit(pause_background, (0, 0))
 
-            # This draws the main text
             def main_text(mty):
+                """
+                Function for a rendering main text for the pause screen, which
+                is also used as a title card.
+                """
+                
+                # This causes main text to be rendered and a renpy.Render object
+                # to be returned.
+                main_text = renpy.render(Fixed(Text(self.main_text, size=60, color="#00bf00", outlines=[ (4, "#007300", 0, 0) ],
+                            font="gui/font/Poultrygeist.ttf", xalign=0.5)), width, height, st, at)
 
-                # Render the main text
-                main_text = renpy.render(Fixed(Text(self.main_text, size=60, color="#00bf00", outlines=[ (4, "#007300", 0, 0) ], font="gui/font/Poultrygeist.ttf", xalign=0.5)), width, height, st, at)
-
-                # renpy.render returns a Render object, which we can
-                # blit to the Render we're making
+                # Blit the main text to the renpy.Render object we're creating.
                 r.blit(main_text, (0, int(mty)))
 
-            # This draws the sub text
             def sub_text(sty):
+                """
+                Function for a rendering sub text for the pause screen, which
+                is also used as a title card.
+                """
+                
+                # This causes sub text to be rendered and a renpy.Render object
+                # to be returned.
+                sub_text = renpy.render(Fixed(Text(self.sub_text, size=60, color="#FFFFFF", outlines=[ (4, "#cccccc", 0, 0) ],
+                            font="gui/font/Poultrygeist.ttf", xalign=0.5)), width, height, st, at)
 
-                # Render the sub text
-                sub_text = renpy.render(Fixed(Text(self.sub_text, size=60, color="#FFFFFF", outlines=[ (4, "#cccccc", 0, 0) ], font="gui/font/Poultrygeist.ttf", xalign=0.5)), width, height, st, at)
-
-                # renpy.render returns a Render object, which we can
-                # blit to the Render we're making
+                # Blit the sub text to the renpy.Render object we're creating.
                 r.blit(sub_text, (0, int(sty)))
 
+            # If the game is not paused, play the music (actually unpausing it)
+            # and update/render all Displayables.
             if not self.is_paused:
 
-                # Unpause the music, if paused
+                # Unpause the music, if paused.
                 renpy.music.set_pause(False, channel="music")
 
-                # Render the player
+                # Update and render the player.
                 self.player.update(self.keyboard, self.WINDOW_WIDTH, self.WINDOW_HEIGHT, self.can_trigger_space_action, self.can_trigger_shift_action)
                 self.player.render(r, st, at)
 
+                # Set the key actions back to False so they don't trigger
+                # continuously.
                 self.can_trigger_space_action = False
                 self.can_trigger_shift_action = False
 
-                # Render the zombies
+                # Update and render the zombies.
                 for zombie in self.zombie_group:
                     zombie.update(self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
                     zombie.render(r, st, at)
 
-                # Render the beams
+                # Update and render the beams.
                 for beam in self.beam_group:
                     beam.update()
                     beam.render(r, st, at)
 
-                # Render the rubies
+                # Update and render the rubies.
                 for ruby in self.ruby_group:
                     ruby.update(self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
                     ruby.render(r, st, at)
 
-                # Render the portals
+                # Update and render the portals.
                 for portal in self.portal_group:
                     portal.update()
                     portal.render(r, st, at)
 
-                # Render the Platforms
+                # Update and render the platforms.
                 for platform in self.platform_tiles:
                     platform.update()
                     platform.render(r, st, at)
 
-                # Render the tiles
-                for tile in self.misc_tile_group:
-                    tile.update()
-                    tile.render(r, st, at)
+                # Update and render the misc tiles.
+                for misc_tile in self.misc_tiles:
+                    misc_tile.update()
+                    misc_tile.render(r, st, at)
 
+                # Update the game's behind-the-scene mechanics every frame.
                 self.update()
+
+            # Else, if the game is paused, pause the music, stop rendering the
+            # Displayables (pausing them in the state they were last left), and
+            # display the pause background, main text, and sub text.
             else:
                 renpy.music.set_pause(True, channel="music")
                 pause_background()
                 main_text(self.mty)
                 sub_text(self.sty)
-
+                
+                # If the user presses Enter, unpause the game and music.
                 if self.keyboard.enter:
                     self.is_paused = False
                     renpy.music.set_pause(False, channel="music")
 
+            # Redraw the Displayables without delay.
             renpy.redraw(self, 0)
 
+            # Return the renpy.Render object.
             return r
 
         def event(self, ev, x, y, st):
-            # Handles events
+            """
+            Handles input events.
 
+            Arguments:
+
+            ev (event): A pygame.event object.
+
+            x (int): The x-coordinates of the event.
+
+            y (int): The y-coordinates of the event.
+
+            st (float): Shown timebase in seconds.
+
+            """
+
+            # If the user presses a key down.
             if ev.type == pygame.KEYDOWN:
+
+                # If the key pressed is up, the up flag is triggered. What
+                # occurs when that happens is handled elsewhere.
                 if ev.key == pygame.K_UP:
                     self.keyboard.up = True
+
+                # If the key pressed is down, the down flag is triggered. What
+                # occurs when that happens is handled elsewhere.
                 elif ev.key == pygame.K_DOWN:
                     self.keyboard.down = True
+
+                # If the key pressed is left, the left flag is triggered. What
+                # occurs when that happens is handled elsewhere.
                 elif ev.key == pygame.K_LEFT:
                     self.keyboard.left = True
+
+                # If the key pressed is right, the right flag is triggered. What
+                # occurs when that happens is handled elsewhere.
                 elif ev.key == pygame.K_RIGHT:
                     self.keyboard.right = True
+
+                # If the key pressed is space, the space value increases by 1.
+                # When and only when it equals 1, the can_trigger_space_action
+                # flag is triggered. This was done to prevent the flag from
+                # triggering multiple times when the space key is held down.
+                # What occurs when the can_trigger_space_action flag is
+                # triggered is handled elsewhere.
                 elif ev.key == pygame.K_SPACE:
                     self.keyboard.space += 1
                     if self.keyboard.space == 1:
                         self.can_trigger_space_action = True
+
+                # If the key pressed is shift, the shift value increases by 1.
+                # When and only when it equals 1, the can_trigger_shift_action
+                # flag is triggered. This was done to prevent the flag from
+                # triggering multiple times when the shift key is held down.
+                # What occurs when the can_trigger_shift_action flag is
+                # triggered is handled elsewhere.
                 elif ev.key == pygame.K_LSHIFT or ev.key == pygame.K_RSHIFT:
                     self.keyboard.shift += 1
                     if self.keyboard.shift == 1:
                         self.can_trigger_shift_action = True
+
+                # If the key pressed is enter, the enter flag is triggered. What
+                # occurs when that happens is handled elsewhere.
                 elif ev.key == pygame.K_RETURN:
                     self.keyboard.enter = True
+
+                # If the key pressed is escape, the escape flag is triggered,
+                # the is_paused flag inverses, and the main and sub text changes
+                # to reflect the paused game's state.
                 elif ev.key == pygame.K_ESCAPE:
                     self.keyboard.escape = True
                     self.is_paused = not self.is_paused
                     self.main_text = "You paused the game!"
                     self.sub_text = "Press Enter or Start to continue"
+            
+            # If the user lets go of a key.
             elif ev.type == pygame.KEYUP:
+
+                # If the key let go is up, the up flag is made False.
                 if ev.key == pygame.K_UP:
                     self.keyboard.up = False
+
+                # If the key let go is down, the down flag is made False.
                 elif ev.key == pygame.K_DOWN:
                     self.keyboard.down = False
+
+                # If the key let go is left, the left flag is made False.
                 elif ev.key == pygame.K_LEFT:
                     self.keyboard.left = False
+
+                # If the key let go is right, the right flag is made False.
                 elif ev.key == pygame.K_RIGHT:
                     self.keyboard.right = False
+            
+                # If the key let go is space, the space value is reset to zero.
                 elif ev.key == pygame.K_SPACE:
                     self.keyboard.space = 0
+                
+                # If the key let go is shift, the shift value is reset to zero.
                 elif ev.key == pygame.K_LSHIFT or ev.key == pygame.K_RSHIFT:
                     self.keyboard.shift = 0
+                
+                # If the key let go is enter, the enter flag is made False.
                 elif ev.key == pygame.K_RETURN:
                     self.keyboard.enter = False
+                
+                # If the key let go is escape, the escape flag is made False.
                 elif ev.key == pygame.K_ESCAPE:
                     self.keyboard.escape = False
+
+            # If the user inputs on a controller.
             else:
+
+                # If the input is pressing the A button, the space value
+                # increases by 1. When and only when it equals 1, the
+                # can_trigger_space_action flag is triggered. This was done to
+                # prevent the flag from triggering multiple times when the A
+                # button is held down. What occurs when the
+                # can_trigger_space_action flag is triggered is handled
+                # elsewhere.
                 if renpy.map_event(ev, "pad_a_press"):
                     self.keyboard.space += 1
                     if self.keyboard.space == 1:
                         self.can_trigger_space_action = True
+
+                # If the input is releasing the A button, the space value is
+                # reset to zero.
                 elif renpy.map_event(ev, "pad_a_release"):
                     self.keyboard.space = 0
 
+                # If the input is pressing the B button, the shift value
+                # increases by 1. When and only when it equals 1, the
+                # can_trigger_shift_action flag is triggered. This was done to
+                # prevent the flag from triggering multiple times when the B
+                # button is held down. What occurs when the
+                # can_trigger_shift_action flag is triggered is handled
+                # elsewhere.
                 if renpy.map_event(ev, "pad_b_press"):
                     self.keyboard.shift += 1
                     if self.keyboard.shift == 1:
                         self.can_trigger_shift_action = True
+
+                # If the input is releasing the B button, the shift value is
+                # reset to zero.
                 elif renpy.map_event(ev, "pad_b_release"):
                     self.keyboard.shift = 0
 
+                # If the input is pressing the back button, the escape flag is
+                # triggered, the is_paused flag inverses, and the main and sub
+                # text changes to reflect the paused game's state.
+                if renpy.map_event(ev, "pad_back_press"):
+                    self.keyboard.escape = True
+                    self.is_paused = not self.is_paused
+                    self.main_text = "You paused the game!"
+                    self.sub_text = "Press Enter or Start to continue"
+
+                # If the input is releasing the back button, the escape flag is
+                # made False.
+                elif renpy.map_event(ev, "pad_back_release"):
+                    self.keyboard.escape = False
+
+                # If the input is pressing the start button, the enter flag is
+                # triggered. What occurs when that happens is handled elsewhere.
                 if renpy.map_event(ev, "pad_start_press"):
                     self.keyboard.enter = True
+
+                # If the input is releasing the start button, the enter flag is
+                # made False.
                 elif renpy.map_event(ev, "pad_start_release"):
                     self.keyboard.enter = False
 
+                # If the input is pushing up on the D-pad or tilting upwards on 
+                # the left or right analog sticks, the up flag is triggered.
+                # What occurs when that happens is handled elsewhere.
                 if renpy.map_event(ev, "pad_lefty_neg") or renpy.map_event(ev, "pad_righty_neg") or renpy.map_event(ev, "pad_dpup_press"):
                     self.keyboard.up = True
+
+                # If the input is releasing up on the D-pad or releasing the 
+                # the left or right analog sticks, the up flag is made False.
                 elif ((renpy.map_event(ev, "pad_lefty_zero") or renpy.map_event(ev, "pad_righty_zero")) and self.keyboard["up"]) or renpy.map_event(ev, "pad_dpup_release"):
                     self.keyboard.up = False
 
+                # If the input is pushing down on the D-pad or tilting
+                # downwards on the left or right analog sticks, the down flag is
+                # triggered. What occurs when that happens is handled elsewhere.
                 if renpy.map_event(ev, "pad_lefty_pos") or renpy.map_event(ev, "pad_righty_pos") or renpy.map_event(ev, "pad_dpdown_press"):
                     self.keyboard.down = True
                 elif ((renpy.map_event(ev, "pad_lefty_zero") or renpy.map_event(ev, "pad_righty_zero")) and self.keyboard["down"]) or renpy.map_event(ev, "pad_dpdown_release"):
                     self.keyboard.down = False
 
+                # If the input is pushing left on the D-pad or tilting leftwards
+                # on the left or right analog sticks, the left flag is
+                # triggered. What occurs when that happens is handled elsewhere.
                 if renpy.map_event(ev, "pad_leftx_neg") or renpy.map_event(ev, "pad_rightx_neg") or renpy.map_event(ev, "pad_dpleft_press"):
                     self.keyboard.left = True
                 elif ((renpy.map_event(ev, "pad_leftx_zero") or renpy.map_event(ev, "pad_rightx_zero")) and self.keyboard["left"]) or renpy.map_event(ev, "pad_dpleft_release"):
                     self.keyboard.left = False
 
+                # If the input is pushing right on the D-pad or tilting
+                # rightwards on the left or right analog sticks, the right flag
+                # is triggered. What occurs when that happens is handled
+                # elsewhere.
                 if renpy.map_event(ev, "pad_leftx_pos") or renpy.map_event(ev, "pad_rightx_pos") or renpy.map_event(ev, "pad_dpright_press"):
                     self.keyboard.right = True
                 elif ((renpy.map_event(ev, "pad_leftx_zero") or renpy.map_event(ev, "pad_rightx_zero")) and self.keyboard["right"]) or renpy.map_event(ev, "pad_dpright_release"):
                     self.keyboard.right = False
 
-            # Ensure the screen updates
+            # Ensure the screen updates by restarting the current interaction.
+            # Among other things, this displays images added to the scene,
+            # re-evaluates screens, and starts any queued transitions.
             renpy.restart_interaction()
 
-            # If the player loses, return it
+            # If the player loses, return it.
             if self.lose:
                 return self.lose
+
+            # Else, if the player doesn't lose, just raises an exception that
+            # causes Ren'Py to ignore the event.
             else:
                 raise renpy.IgnoreEvent()
 
         def update(self):
-            # Update the game
+            """
+            Update the behind-the-scene mechanics.
+            """
 
-            # Update the round time every second
+            # Update the round time every "second". Because it is inadvisable to
+            # restrict FPS in Ren'Py, the amount of time that actually passes
+            # may not actually be a second but this is a passable means of
+            # tracking the passage of time. For every update loop, frame_count
+            # is added to by one. When obstensibly sixty frames have passed,
+            # round_time is subtracted to by one and frame_count is reset to
+            # zero.
             self.frame_count += 1
             if self.frame_count % 60 == 0:
                 self.round_time -= 1
                 self.frame_count = 0
 
+            # Check for collisions, check if a zombie should be added, check if
+            # the round is complete, and check for a game over.
             self.check_collisions()
             self.add_zombie()
             self.check_round_completion()
             self.check_game_over()
 
         def add_zombie(self):
-            #Add a zombie to the game
+            """
+            Add a zombie to the game.
+            """
 
-            # Check to add a zombie every second
+            # When obstensibly sixty frames have passed, add a zombie to the
+            # game.
             if self.frame_count % 60 == 0:
-                # Only add a zombie if zombie creation time has passed
+                # Only add a zombie if the zombie creation interval can be
+                # divided from the round_time with nothing remaining. This
+                # zombie will be created with a random gender, a random walking
+                # direction, a randomized starting position, and a random speed.
+                # Also add the zombie to the zombie group.
                 if self.round_time % self.zombie_creation_interval == 0:
-                    zombie = Zombie(random.randint(100, self.WINDOW_WIDTH - 100), -100, self.platform_tiles, self.portal_group, self.round_number, 5 + self.round_number)
+                    zombie = ZKZombie(random.randint(100, self.WINDOW_WIDTH - 100), -100, self.platform_tiles, self.portal_group, self.round_number, 5 + self.round_number)
                     self.zombie_group.append(zombie)
 
         def check_collisions(self):
-            #Check collisions that affect gameplay
+            """
+            Check collisions that affect gameplay.
+            """
 
-            # See if any beam in the beam group hit a zombie in the zombie group
+            # See if any zombie in the zombie group hit any beam in the beam
+            # group. If so, play the zombie's slash hit sound and remove the
+            # beam from the beam_group. Then kill the zombie and animate its
+            # death.
             for zombie in self.zombie_group:
                 for beam in self.beam_group:
                     if zombie.is_colliding(beam):
@@ -1560,27 +1753,36 @@
                         zombie.is_dead = True
                         zombie.animate_death = True
 
-            # See if a player stomped a dead zombie to finish it or collided with a live zombie to take damage
+            # See if a player stomped a dead zombie to finish it off or collided
+            # with a live zombie to take damage.
             for zombie in self.zombie_group:
                 if zombie.is_colliding(self.player):
-                    # The zombie is dead
+
+                    # If the zombie is dead, play the kicking sound, remove the
+                    # zombie from the zombie_group, add points to the player's
+                    # score, and generate a ruby, adding it to the ruby group.
                     if zombie.is_dead:
                         renpy.sound.play("audio/zk_zombie_kick_sound.wav")
                         self.zombie_group.remove(zombie)
-                        self.score += 25
+                        self.score += self.ZOMBIE_POINT_VALUE
 
                         ruby = Ruby(self.WINDOW_WIDTH, self.platform_tiles, self.portal_group)
                         self.ruby_group.append(ruby)
 
-                    # The zombie isn't dead so take damage
+                    # If the zombie ism't dead, play the player getting hit
+                    # sound, move the player so they do not continually take
+                    # damage, and update the player's x-coordinates.
                     else:
                         self.player.health -= 20
                         renpy.sound.play("audio/zk_player_hit_sound.wav")
-                        # Move the player to not continually take damage
                         self.player.position.x -= 256 * zombie.direction
                         self.player.x = self.player.position.x
 
-            # See if a player collided with a ruby
+            # See if a player collided with a ruby. If so, play the ruby pickup
+            # sound, remove the ruby from the ruby_group, add points to the
+            # player's score, add value to the player's health, and if the
+            # player's is higher than their starting amount of health, reset it
+            # to their starting value.
             for ruby in self.ruby_group:
                 if self.player.is_colliding(ruby):
                     renpy.sound.play("audio/zk_ruby_pickup_sound.wav")
@@ -1590,25 +1792,38 @@
                     if self.player.health > self.player.STARTING_HEALTH:
                         self.player.health = self.player.STARTING_HEALTH
 
-            # See if a living zombie collided with a ruby
+            # See if a living zombie collided with a ruby. If so, play the lost
+            # ruby sound, remove the ruby from the ruby_group, and create a
+            # zombie. This zombie will be created with a random gender, a random
+            # walking direction, a randomized starting position, and a random
+            # speed based on the round number. Also add the zombie to the zombie
+            # group.
             for zombie in self.zombie_group:
                 for ruby in self.ruby_group:
                     if not zombie.is_dead:
                         if zombie.is_colliding(ruby):
-                            self.ruby_group.remove(ruby)
                             renpy.sound.play("audio/zk_lost_ruby_sound.wav")
-                            zombie = Zombie(random.randint(100, self.WINDOW_WIDTH - 100), -100, self.platform_tiles, self.portal_group, self.round_number, 5 + self.round_number)
+                            self.ruby_group.remove(ruby)
+                            zombie = ZKZombie(random.randint(100, self.WINDOW_WIDTH - 100), -100, self.platform_tiles, self.portal_group, self.round_number, 5 + self.round_number)
                             self.zombie_group.append(zombie)
 
         def check_round_completion(self):
-            # Check if the player survived a single night
+            """
+            Check if the player survived a single night, i.e. the round is
+            complete.
+            """
 
+            # If round_time has counted down to zero, start a new round.
             if self.round_time == 0:
                 self.start_new_round()
 
         def check_game_over(self):
-            # Check to see if the player lost the game
+            """
+            Check to see if the player lost the game.
+            """
 
+            # If the player's health has reached zero, set the lose flag to True
+            # and cause an event to be generated immediately, ending the game.
             if self.player.health <= 0:
                 
                 self.lose = True
@@ -1616,76 +1831,98 @@
                 renpy.timeout(0)
 
         def start_new_round(self):
-            # Start a new night
+            """
+            Start a new night, i.e. a new round is begun.
+            """
 
+            # Increase the round_number by one.
             self.round_number += 1
 
-            # Decrease zombie creation time which means zombies are created faster
+            # If the round_number is lower than the
+            # starting_zombie_creation_interval, decrease
+            # zombie_creation_inverval which means zombies are created
+            # faster.
             if self.round_number < self.STARTING_ZOMBIE_CREATION_INTERVAL:
                 self.zombie_creation_interval -= 1
 
-            # Reset round values
+            # Reset round time.
             self.round_time = self.STARTING_ROUND_TIME
 
+            # Clear zombie, ruby, and beam groups.
             self.zombie_group.clear()
             self.ruby_group.clear()
             self.beam_group.clear()
 
+            # Reset the player's velocity and position.
             self.player.reset()
 
+            # Set the main and subtext to display a congratulatory message and
+            # pause the game.
             self.main_text = "You survived the night!"
             self.sub_text = "Press Enter or Start to continue"
             self.is_paused = True
 
         def reset_game(self):
-            # Reset the game
+            """
+            Reset the game's behind-the-scene's mechanics. This is primarily
+            used before starting a new game for the first time (or after playing
+            again).
+            """
 
-            # Reset game values
+            # Set the lose flag to False, the keyboard to a blank state of the
+            # KeyboardInput object, and set the key actions as True.
             self.lose = False
             self.keyboard = KeyboardInput()
             self.can_trigger_space_action = True
             self.can_trigger_shift_action = True
 
+            # Reset the score to zero, set the round_number back to one, set the
+            # round_time to the starting_round_time constant variable, and the
+            # zombie_creation_interval to the starting_zombie_creation_interval
+            # constant variable.
             self.score = 0
             self.round_number = 1
             self.round_time = self.STARTING_ROUND_TIME
             self.zombie_creation_interval = self.STARTING_ZOMBIE_CREATION_INTERVAL
 
-            # Reset the player
+            # Reset the player's health to the starting_health constant variable
+            # and reset the player's velocity and position.
             self.player.health = self.player.STARTING_HEALTH
             self.player.reset()
 
-            # Clear sprite groups
+            # Clear zombie, ruby, and beam groups.
             self.zombie_group.clear()
             self.ruby_group.clear()
             self.beam_group.clear()
 
-
+    # Create function for displaying dynamic Text object displaying the player's score.
     def display_zk_score(st, at):
         return Text(_("Score: ") + "%d" % zombie_knight.score, size=40, color="#FFFFFF", outlines=[ (4, "#cccccc", 0, 0) ], font="gui/font/Pixel.ttf"), .1
 
+    # Create function for displaying dynamic Text object displaying the player's health.
     def display_zk_health(st, at):
         return Text(_("Health: ") + "%d" % zombie_knight.player.health, size=40, color="#FFFFFF", outlines=[ (4, "#cccccc", 0, 0) ], font="gui/font/Pixel.ttf"), .1
 
+    # Create function for displaying dynamic Text object displaying the round number.
     def display_zk_round(st, at):
         return Text(_("Night: ") + "%d" % zombie_knight.round_number, size=40, color="#FFFFFF", outlines=[ (4, "#cccccc", 0, 0) ], font="gui/font/Pixel.ttf"), .1
 
+    # Create function for displaying dynamic Text object displaying the round time.
     def display_zk_time(st, at):
         return Text(_("Sunrise In: ") + "%d" % zombie_knight.round_time, size=40, color="#FFFFFF", outlines=[ (4, "#cccccc", 0, 0) ], font="gui/font/Pixel.ttf"), .1
 
-    # Create sprite groups
-    my_misc_tile_group = []
+
+    # Create list groups for holding the sprites.
+    my_misc_tiles = []
     my_platform_tiles = []
-
     my_beam_group = []
-
     my_zombie_group = []
-
     my_portal_group = []
     my_ruby_group = []
 
 
-    # Create the tile map (0: no tile, 1: dirt, 2-5: platforms, 6: Ruby Maker, 7-8: portals, 9: player)
+    # Create the tile map using nested lists (0: no tile, 1: dirt, 2-5:
+    # platforms, 6: ruby maker, 7-8: portals, 9: player)
     tile_map = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0],
@@ -1707,43 +1944,63 @@
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     ]
 
-    # Generate Tile objects from the tile map
-    # Loop through the 18 lists (rows) in the tile map (i moves us down the map)
+    # Generate ZKTile objects from the tile map. Loop through the 18 lists (rows)
+    # in the tile map (i moves us down the map).
     for i in range(len(tile_map)):
-        # Loop through the 32 elements in a given list (columns) (j moves us across the map)
+
+        # Loop through the 32 elements in a given list (columns) (j moves us
+        # across the map).
         for j in range(len(tile_map[i])):
-            # Dirt tile
+
+            # If the element is a 1 (dirt tile), create a dirt tile and append
+            # it to my_misc_tiles.
             if tile_map[i][j] == 1:
-                my_misc_tile_group.append(Tile(j * 60, i * 60, 1))
-            # Platform tiles
+                my_misc_tiles.append(ZKTile(j * 60, i * 60, 1))
+
+            # If the element is a 2-5 (platform tile), create a platform tile
+            # and append it to my_platform_tiles.
             elif tile_map[i][j] == 2:
-                my_platform_tiles.append(Tile(j * 60, i * 60, 2))
+                my_platform_tiles.append(ZKTile(j * 60, i * 60, 2))
             elif tile_map[i][j] == 3:
-                my_platform_tiles.append(Tile(j * 60, i * 60, 3))
+                my_platform_tiles.append(ZKTile(j * 60, i * 60, 3))
             elif tile_map[i][j] == 4:
-                my_platform_tiles.append(Tile(j * 60, i * 60, 4))
+                my_platform_tiles.append(ZKTile(j * 60, i * 60, 4))
             elif tile_map[i][j] == 5:
-                my_platform_tiles.append(Tile(j * 60, i * 60, 5))
-            # Ruby Maker
+                my_platform_tiles.append(ZKTile(j * 60, i * 60, 5))
+
+            # If the element is a 6 (ruby maker), create a ruby maker
+            # and append it to my_misc_tiles.
             elif tile_map[i][j] == 6:
-                my_misc_tile_group.append(RubyMaker(j * 60 - 30, i * 60))
-            # Portals
+                my_misc_tiles.append(RubyMaker(j * 60 - 30, i * 60))
+
+            # If the element is a 7-8 (portal), create a portal
+            # and append it to my_portal_group.
             elif tile_map[i][j] == 7:
                 my_portal_group.append(Portal(j * 60, i * 60, "green"))
             elif tile_map[i][j] == 8:
                 my_portal_group.append(Portal(j * 60, i * 60, "purple"))
-            # Player
+
+            # If the element is a 9 (player), create a player.
             elif tile_map[i][j] == 9:
                 my_player = ZKPlayer(j * 60 - 60, i * 60 + 60, my_platform_tiles, my_portal_group, my_beam_group)
 
-default zombie_knight = ZombieKnightDisplayable(my_player, my_zombie_group, my_platform_tiles, my_portal_group, my_beam_group, my_ruby_group, my_misc_tile_group)
 
+# Create the Zombie Knight Displayable that we'll be adding to a screen to play
+# the game.
+default zombie_knight = ZKDisplayable(my_player, my_zombie_group, my_platform_tiles, my_portal_group, my_beam_group, my_ruby_group, my_misc_tiles)
+
+
+# Create the screen needed to display the Displayable so we can play the game.
 screen zombie_knight():
 
+    # Add the background to the game.
     add "images/zk_background.jpg"
 
+    # Add the earlier created Displayable.
     add zombie_knight
 
+    # If the game is not paused, add the player's score, the player's health,
+    # the title of the game, the round number, and the round time.
     if not zombie_knight.is_paused:
         add DynamicDisplayable(display_zk_score) xalign 0.0 xoffset 20 yalign 0.95
         add DynamicDisplayable(display_zk_health) xalign 0.0 xoffset 20 yalign 1.0
@@ -1759,34 +2016,50 @@ screen zombie_knight():
         add DynamicDisplayable(display_zk_round) xalign 1.0 xoffset -20 yalign 0.95
         add DynamicDisplayable(display_zk_time) xalign 1.0 xoffset -20 yalign 1.0
 
+
+# This is the label we call to play Zombie Knight.
 label play_zombie_knight:
 
-    window hide  # Hide the window and quick menu while in Zombie Knight
+    # Hide the window and quick menu while in Zombie Knight.
+    window hide
     $ quick_menu = False
 
+    # Play the music for Zombie Knight.
     play music zk_background_music
 
+    # Reset the values for Zombie Knight, whether this is the first time or
+    # you're playing again.
     $ zombie_knight.reset_game()
 
+    # Call the screen that contains the Zombie Knight Displayable, which will
+    # hide when the game is lost and the event is timedout.
     call screen zombie_knight
 
+    # Restore the window and quick menu while outside of Zombie Knight.
     $ quick_menu = True
     window auto
 
+
+# This is the label that automatically comes up after completing a game of
+# Zombie Knight.
 label zombie_knight_done:
 
-    if persistent.zombie_knight_high_score >= zombie_knight.score:
-        pass
-    else:
+    # If the score is higher than the recorded high score, set the high score to
+    # be the same as the new score.
+    if zombie_knight.score >= persistent.zombie_knight_high_score:
         $ persistent.zombie_knight_high_score = zombie_knight.score
 
+    # Display the latest score and high score.
     "Score: [zombie_knight.score]\n\nHigh Score: [persistent.zombie_knight_high_score]"
 
+    # Ask the player if they'd like to play again.
     menu:
         "Would you like to play again?"
 
+        # Jump to playing again, if so.
         "Yes.":
             jump play_zombie_knight
 
+        # Return, ending the game, if not.
         "No.":
             return
