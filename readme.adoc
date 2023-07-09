@@ -1,10 +1,43 @@
 = Zombie Knight
 
-An arcade-style game demo made in Ren'Py using Creator Defined Displayables.
+An arcade-style platformer game demo made in Ren'Py using Creator Defined Displayables. It was originally coded for
+Pygame and then I ported it to Ren'Py, converting everything needed to make it function on Ren'Py's engine.
+
+
+== How to Play
+
+In Zombie Knight, you are a brave knight facing down hordes of neverending zombies. Each night that you survive, another
+round passes and more zombies appear, faster than before. Your goal is to shoot them with your sword's beam and stomp on
+them before they can reanimate. Killing a zombie will cause a ruby to appear from the Ruby Maker at the top of the
+screen. Collect these to gain points and restore health. If a zombie collects one, instead, a new zombie is instantly
+created. There are also portals that you, the zombies, and the rubies can use to transport to other portals, from
+green-to-green and purple-to-purple. You only need to survive thirty seconds each round but lose all of your health and
+it's game over. Can you reach an all-new high score?
+
+=== Controls
+
+==== Keyboard
+
+* Left Arrow - Move Left
+* Right Arrow - Move Right
+* Space - Jump
+* Shift - Fire Beam
+* Escape - Pause Game
+* Enter - Unpause Game
+
+==== Controller
+
+* Left D-Pad/Push Left on Either Analog Stick - Move Left
+* Right D-Pad/Push Right on Either Analog Stick - Move Right
+* Primary/A Button - Jump
+* Secondary/B Button - Fire Beam
+* Start - Pause Game
+* Back - Unpause Game
 
 
 == Credits
 
+* Original Code Inspiration - link:https://www.udemy.com/course/the-art-of-doing-video-game-creation-with-python-and-pygame/[The Art of Doing: Video Game Creation With Python and Pygame Udemy Course by Michael Eramo]
 * Zombie Sprites - link:https://www.gameart2d.com/the-zombies-free-sprites.html[Game Art 2D]
 * Knight Sprites - link:https://www.gameart2d.com/the-knight-free-sprites.html[Game Art 2D]
 * Background - link:https://www.gameart2d.com/free-graveyard-platformer-tileset.html[Game Art 2D]
@@ -17,3 +50,6 @@ An arcade-style game demo made in Ren'Py using Creator Defined Displayables.
 * Background Music - link:https://opengameart.org/content/5-chiptunes-action[SubspaceAudio on OpenGameArt.org]
 * Additional SFX - link:https://www.leshylabs.com/apps/sfMaker/[Leshy SFMaker]
 
+=== Special Thanks
+
+* Refactoring and Documentation Help - link:https://github.com/Foxcapades/[Foxcapades]
