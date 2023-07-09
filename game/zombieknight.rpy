@@ -1202,8 +1202,6 @@
 
     class KeyboardInput():
         def __init__(self):
-            self.up = False
-            self.down = False
             self.left = False
             self.right = False
             self.space = 0
@@ -1493,19 +1491,9 @@
             # If the user presses a key down.
             if ev.type == pygame.KEYDOWN:
 
-                # If the key pressed is up, the up flag is triggered. What
-                # occurs when that happens is handled elsewhere.
-                if ev.key == pygame.K_UP:
-                    self.keyboard.up = True
-
-                # If the key pressed is down, the down flag is triggered. What
-                # occurs when that happens is handled elsewhere.
-                elif ev.key == pygame.K_DOWN:
-                    self.keyboard.down = True
-
                 # If the key pressed is left, the left flag is triggered. What
                 # occurs when that happens is handled elsewhere.
-                elif ev.key == pygame.K_LEFT:
+                if ev.key == pygame.K_LEFT:
                     self.keyboard.left = True
 
                 # If the key pressed is right, the right flag is triggered. What
@@ -1552,16 +1540,8 @@
             # If the user lets go of a key.
             elif ev.type == pygame.KEYUP:
 
-                # If the key let go is up, the up flag is made False.
-                if ev.key == pygame.K_UP:
-                    self.keyboard.up = False
-
-                # If the key let go is down, the down flag is made False.
-                elif ev.key == pygame.K_DOWN:
-                    self.keyboard.down = False
-
                 # If the key let go is left, the left flag is made False.
-                elif ev.key == pygame.K_LEFT:
+                if ev.key == pygame.K_LEFT:
                     self.keyboard.left = False
 
                 # If the key let go is right, the right flag is made False.
@@ -1621,54 +1601,38 @@
                 elif renpy.map_event(ev, "pad_b_release"):
                     self.keyboard.shift = 0
 
-                # If the input is pressing the back button, the escape flag is
+                # If the input is pressing the back button, the enter flag is
+                # triggered. What occurs when that happens is handled elsewhere.
+                if renpy.map_event(ev, "pad_back_press"):
+                    self.keyboard.enter = True
+
+                # If the input is releasing the back button, the enter flag is
+                # made False.
+                elif renpy.map_event(ev, "pad_back_release"):
+                    self.keyboard.enter = False
+
+                # If the input is pressing the start button, the escape flag is
                 # triggered, the is_paused flag inverses, and the main and sub
                 # text changes to reflect the paused game's state.
-                if renpy.map_event(ev, "pad_back_press"):
+                if renpy.map_event(ev, "pad_start_press"):
                     self.keyboard.escape = True
                     self.is_paused = not self.is_paused
                     self.main_text = "You paused the game!"
                     self.sub_text = "Press Enter or Start to continue"
 
-                # If the input is releasing the back button, the escape flag is
-                # made False.
-                elif renpy.map_event(ev, "pad_back_release"):
-                    self.keyboard.escape = False
-
-                # If the input is pressing the start button, the enter flag is
-                # triggered. What occurs when that happens is handled elsewhere.
-                if renpy.map_event(ev, "pad_start_press"):
-                    self.keyboard.enter = True
-
-                # If the input is releasing the start button, the enter flag is
+                # If the input is releasing the start button, the escape flag is
                 # made False.
                 elif renpy.map_event(ev, "pad_start_release"):
-                    self.keyboard.enter = False
-
-                # If the input is pushing up on the D-pad or tilting upwards on 
-                # the left or right analog sticks, the up flag is triggered.
-                # What occurs when that happens is handled elsewhere.
-                if renpy.map_event(ev, "pad_lefty_neg") or renpy.map_event(ev, "pad_righty_neg") or renpy.map_event(ev, "pad_dpup_press"):
-                    self.keyboard.up = True
-
-                # If the input is releasing up on the D-pad or releasing the 
-                # the left or right analog sticks, the up flag is made False.
-                elif ((renpy.map_event(ev, "pad_lefty_zero") or renpy.map_event(ev, "pad_righty_zero")) and self.keyboard["up"]) or renpy.map_event(ev, "pad_dpup_release"):
-                    self.keyboard.up = False
-
-                # If the input is pushing down on the D-pad or tilting
-                # downwards on the left or right analog sticks, the down flag is
-                # triggered. What occurs when that happens is handled elsewhere.
-                if renpy.map_event(ev, "pad_lefty_pos") or renpy.map_event(ev, "pad_righty_pos") or renpy.map_event(ev, "pad_dpdown_press"):
-                    self.keyboard.down = True
-                elif ((renpy.map_event(ev, "pad_lefty_zero") or renpy.map_event(ev, "pad_righty_zero")) and self.keyboard["down"]) or renpy.map_event(ev, "pad_dpdown_release"):
-                    self.keyboard.down = False
+                    self.keyboard.escape = False
 
                 # If the input is pushing left on the D-pad or tilting leftwards
                 # on the left or right analog sticks, the left flag is
                 # triggered. What occurs when that happens is handled elsewhere.
                 if renpy.map_event(ev, "pad_leftx_neg") or renpy.map_event(ev, "pad_rightx_neg") or renpy.map_event(ev, "pad_dpleft_press"):
                     self.keyboard.left = True
+
+                # If the input is releasing left on the D-pad or releasing the 
+                # the left or right analog sticks, the left flag is made False.
                 elif ((renpy.map_event(ev, "pad_leftx_zero") or renpy.map_event(ev, "pad_rightx_zero")) and self.keyboard["left"]) or renpy.map_event(ev, "pad_dpleft_release"):
                     self.keyboard.left = False
 
@@ -1678,6 +1642,9 @@
                 # elsewhere.
                 if renpy.map_event(ev, "pad_leftx_pos") or renpy.map_event(ev, "pad_rightx_pos") or renpy.map_event(ev, "pad_dpright_press"):
                     self.keyboard.right = True
+
+                # If the input is releasing right on the D-pad or releasing the 
+                # the left or right analog sticks, the right flag is made False.
                 elif ((renpy.map_event(ev, "pad_leftx_zero") or renpy.map_event(ev, "pad_rightx_zero")) and self.keyboard["right"]) or renpy.map_event(ev, "pad_dpright_release"):
                     self.keyboard.right = False
 
