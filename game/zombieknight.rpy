@@ -32,6 +32,45 @@
             self.y = vec.y
 
 
+    class KeyboardInput():
+        """
+        The class for handling the resetting of and changing the state of keyboard inputs.
+        """
+
+        def __init__(self):
+            """
+            Attributes:
+            -----------
+            left : bool
+                Whether the player has pressed the input for going left.
+
+            right : bool
+                Whether the player has pressed the input for going right.
+
+            space : int
+                Whether the player has pressed the space bar, which is used for jumping,
+                and is used as an increasing integer to stop repeat jumping on holding space.
+
+            shift : int
+                Whether the player has pressed the shift bar, which is used for attacking,
+                and is used as an increasing integer to stop repeat attacking on holding shift.
+
+            enter : bool
+                Whether the player has pressed the input for Enter, which is used to unpause
+                the game.
+
+            escape : bool
+                Whether the player has pressed the input for Escape, which is used to pause and exit
+                the game.
+            """
+            self.left = False
+            self.right = False
+            self.space = 0
+            self.shift = 0
+            self.enter = False
+            self.escape = False
+            
+
     class ZKSprite():
         """
         The base class for all sprites or tiles for Zombie Knight.
