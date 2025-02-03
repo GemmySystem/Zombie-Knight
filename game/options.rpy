@@ -23,7 +23,7 @@ define gui.show_name = True
 
 ## The version of the game.
 
-define config.version = "1.1"
+define config.version = "1.2"
 
 
 ## Text that is placed on the game's about screen. Place the text between the
@@ -154,6 +154,14 @@ define config.save_directory = "ZombieKnight-1686903433"
 ## The icon displayed on the taskbar or dock.
 
 define config.window_icon = "gui/window_icon.png"
+
+
+## Custom Definitions ########################################################################
+##
+## Custom-defined definition variables.
+
+default preferences.gl_framerate = 60
+define config.allow_skipping = False
 
 
 ## Build configuration #########################################################
